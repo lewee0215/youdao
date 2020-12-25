@@ -1,9 +1,8 @@
-MQ.readme
-# JMS && AMQP 协议
-AMQP中增加了Exchange和Binging的角色。生产者把消息发布到Exchange上，消息最终到达队列并被消费者接收，而Binding决定交换器的消息应该发送到哪个队列
+# JMS && AMQP 协议  
+AMQP中增加了Exchange和Binging的角色。生产者把消息发布到Exchange上，消息最终到达队列并被消费者接收，而Binding决定交换器的消息应该发送到哪个队列  
 
-## JMS 规范
-https://baike.baidu.com/item/JMS/2836691?fr=aladdin
+## JMS 规范  
+https://baike.baidu.com/item/JMS/2836691?fr=aladdin  
 JMS规范并不需要JMS供应商实现消息的优先级路线，但是它需要递送加快的消息优先于普通级别的消息  
 JMS定义了从0到9的优先级路线级别，0是最低的优先级而9则是最高的。更特殊的是0到4是正常优先级的变化幅度，而5到9是加快的优先级的变化幅度
 

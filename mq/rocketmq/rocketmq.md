@@ -1,4 +1,12 @@
-RocketMQ 基础概念信息
+# RocketMQ 基础概念信息
+
+## vipChannelEnabled
+配置说明：是否启用vip netty通道以发送消息
+默认值：-D com.rocketmq.sendMessageWithVIPChannel参数的值，若无则是true
+
+broker的netty server会起两个通信服务。两个服务除了服务的端口号不一样，其他都一样。  
+其中一个的端口（配置端口-2）作为vip通道，客户端可以启用本设置项把发送消息此vip通道
+
 ## RokcetMQ 集群消费 & 广播消费
 与集群消费不同的是，广播消息 consumer 的消费进度是存储在各个 consumer 实例上
 1. 容易造成消息重复
@@ -7,13 +15,6 @@ RocketMQ 基础概念信息
 对于一个ConsumerGroupName来说，可以布置一个消费者实例，也可以布置多个消费者实例  
 https://help.aliyun.com/document_detail/43523.html?spm=a2c4g.11186623.6.749.53e84e0eXIri6a  
 订阅关系一致指的是同一个消费者 Group ID 下所有 Consumer 实例所订阅的 Topic、Group ID、Tag 必须完全一致。一旦订阅关系不一致，消息消费的逻辑就会混乱，甚至导致消息丢失
-
-### Consumer.start()
-如果消息消费模式为集群模式，默认为该消费组订阅重试主题 consumer.start() => copySubscription()
-
-### Consumer.offsetStore
-如果是集群模式，使用远程存储 RemoteBrokerOffsetStore  
-如果是广播模式，则使用本地存储LocalFileOffsetStore  
 
 ###  消息偏移量 Offset  
 https://www.cnblogs.com/jwen1994/p/12369913.html  

@@ -47,9 +47,7 @@ http://www.wowubuntu.com/markdown/#em
 **粗体**  
 ***加粗斜体***  
 ~~删除线~~  
-<font color='yellow'>
-标红字体 
-</font>
+<font color='yellow'>标红字体 </font>
 
 Markdown 插入链接：
 [链接文字](链接网址 "标题")

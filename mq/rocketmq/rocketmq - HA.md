@@ -1,3 +1,6 @@
+### RocketMQ 高可用
+https://www.cnblogs.com/xuwc/p/9043764.html
+
 # Master-Slave HA
 https://blog.csdn.net/prestigeding/article/details/93672079  
 Master与Slave的对应关系通过指定相同的BrokerName，不同的BrokerId来定义，BrokerId为0表示Master，非0表示Slave。Master也可以部署多个。每个Broker与NameServer集群中的所有节点建立长连接，定时注册Topic信息到所有 NameServer。

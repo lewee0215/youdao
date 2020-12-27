@@ -16,6 +16,13 @@ config| 运行时的配置信息，包含主席消息过滤信息、集群消费
 ## CommitLog
 https://zhuanlan.zhihu.com/p/92125985
 RocketMQ将所有消息存储在一起，以顺序IO的方式写入磁盘，充分利用了磁盘顺序写减少了IO争用提高数据存储的性能
+
+CommitLog.this.topicQueueTable.put(key, queueOffset)，其中的key是 topic-queueId, queueOffset是当前这个key中的消息数，每增加一个消息增加一(不会自减)；
+
+CommitLog的清理机制：
+● 按时间清理，rocketmq默认会清理3天前的commitLog文件；
+● 按磁盘水位清理：当磁盘使用量到达磁盘容量75%，开始清理最老的commitLog文件。
+
 ![alt text](https://pic4.zhimg.com/80/v2-cbf1c787be956417cf2427b23e643eef_1440w.jpg "CommitLog中的存储格式")
 
 字段名称 | 字段描述
@@ -44,6 +51,15 @@ Properties|Properties的内容，也不是固定长度，和前面的2字节prop
 <br/>
 
 ## ConsumeQueue
+ConsumerQueue相当于CommitLog的索引文件，消费者消费时会先从ConsumerQueue中查找消息的在commitLog中的offset，再去CommitLog中找元数据。
+如果某个消息只在CommitLog中有数据，没在ConsumerQueue中， 则消费者无法消费，Rocktet的事务消息就是这个原理
+Consumequeue类对应的是每个topic和queuId下面的所有文件，相当于字典的目录用来指定消息在消息的真正的物理文件commitLog上的位置
+消息的起始物理偏移量physical offset(long 8字节)+消息大小size(int 4字节)+tagsCode(long 8字节)
+
+● 每个topic下的每个queue都有一个对应的consumequeue文件。
+● 文件默认存储路径：${user.home} \store\consumequeue\${topicName}\${queueId}\${fileName}
+● 每个文件由30W条数据组成，每条数据的大小为20个字节，从而每个文件的默认大小为600万个字节（consume queue中存储单元是一个20字节定长的数据）是顺序写顺序读
+
 ConsumeQueue中只存储路由到该queue中的消息在CommitLog中的offset，消息的大小以及消息所属的tag的hash（tagCode）
 ![alt text](https://pic4.zhimg.com/80/v2-14002dfc29ac5d12b0109c8f80ade4e7_1440w.jpg "CommitLog中的存储格式")
 
@@ -72,6 +88,7 @@ indexCount|已使用的 Index 条目个数
 一个 IndexFile 默认包含 500W 个 Hash 槽，每个 Hash 槽存储的是落在该 Hash 槽的 hashcode 最新的 Index 的索引
 
 ### Index 条目列表
+
 字段名称 | 字段描述
 :-- | :--
 hashcode|key 的 hashcode  

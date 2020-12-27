@@ -1,7 +1,7 @@
 ## RocketMQ Producer Group 
 发送分布式事务消息时，如果Producer中途意外宕机，Broker会主动回调Producer Group内的任意一台机器来确认事务状态
 
-## RocketMQ 生产者消息重试
+## RocketMQ Producer 生产者消息重试
 https://www.cnblogs.com/qdhxhz/p/11117379.html
 消息重试只针对 sendResult.getSendStatus() != SendStatus.SEND_OK 的情况
 
@@ -25,7 +25,7 @@ switch (communicationMode) {
 }
 ```
 
-# RocketMQ 消费之消息重试
+# RocketMQ Consumer 消费之消息重试
 https://help.aliyun.com/document_detail/43490.html?spm=a2c4g.11186623.4.4.609c52c3hxFwDV  
 
 ## 顺序消息的重试
@@ -50,3 +50,9 @@ https://help.aliyun.com/document_detail/43490.html?spm=a2c4g.11186623.4.4.609c52
 8     | 6m     | 16    | 2h
 
 
+https://www.cnblogs.com/allenwas3/p/11922650.html
+消息消费超过最大次数或者客户端配置了直接发送到死信队列（%DLQ%+consumerGroup），则把消息发送到死信队列，否则把消息发送 retry topic (%RETRY% +consumerGroup)
+
+##  死信消息
+* 不会再被消费者正常消费。
+* 有效期与正常消息相同，均为 3 天，3 天后会被自动删除。因此，请在死信消息产生后的 3 天内及时处理。

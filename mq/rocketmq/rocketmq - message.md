@@ -1,27 +1,71 @@
-## 消息类型
-a)     同步消息
-b)     异步消息
-c)     单向消息
-d)     顺序消息
-e)     批量消息
-f)     过滤消息
-g)     事务消息
+## 消息ID 详解
+https://blog.csdn.net/prestigeding/article/details/104739950
+从消息发送的结果可以得知，RocketMQ 发送的返回结果会返回msgId 与 offsetMsgId
+> msgId：该ID 是消息发送者在消息发送时会首先在客户端生成，全局唯一，在 RocketMQ 中该 ID 还有另外的一个叫法：uniqId，无不体现其全局唯一性。  
+> offsetMsgId：消息偏移ID，该 ID 记录了消息所在集群的物理地址，主要包含所存储 Broker 服务器的地址( IP 与端口号)以及所在commitlog 文件的物理偏移量
+
+### uniqId 生成规则
+msgId 的前半段FIX_STRING 的主要由：客户端的IP、进程ID、加载 MessageClientIDSetter 的类加载器的 hashcode
+msgId 的后半段主要由：当前时间与系统启动时间的差值，以及自增序号
+
+```java
+private static byte[] createUniqIDBuffer() {
+    ByteBuffer buffer = ByteBuffer.allocate(4 + 2);
+    long current = System.currentTimeMillis();
+    if (current >= nextStartTime) {
+        setStartTime(current);
+    }
+    buffer.position(0);
+    buffer.putInt((int) (System.currentTimeMillis() - startTime));
+    buffer.putShort((short) COUNTER.getAndIncrement());
+    return buffer.array();
+}
+```
+### offsetMsgId 生成规则
+在消息 Broker 服务端将消息追加到内存后会返回其物理偏移量，即在 commitlog 文件中的文件，然后会再次生成一个id，代码中虽然也叫 msgId，其实这里就是我们常说的 offsetMsgId，即记录了消息的物理偏移量
+```java
+public static String createMessageId(final ByteBuffer input ,final ByteBuffer addr, final long offset) {
+	input.flip();
+    int msgIDLength = addr.limit() == 8 ? 16 : 28;
+    input.limit(msgIDLength);
+    input.put(addr);
+    input.putLong(offset);
+    return UtilAll.bytes2string(input.array());
+}
+```
+* ByteBuffer input
+用来存放 offsetMsgId 的字节缓存区( NIO 相关的基础知识)
+* ByteBuffer addr
+当前 Broker 服务器的 IP 地址与端口号，即通过解析 offsetMsgId 从而得到消息服务器的地址信息。
+* long offset
+消息的物理偏移量。
+即构成 offsetMsgId 的组成部分：Broker 服务器的 IP 与端口号、消息的物理偏移量
+
+> 温馨提示：如果消息消费失败需要重试，RocketMQ 的做法是将消息重新发送到 Broker 服务器，此时全局 msgId 是不会发送变化的，但该消息的 offsetMsgId 会发送变化，因为其存储在服务器中的位置发生了变化    
+<br/>
+
+## 消息类型  
+a)同步消息
+b)异步消息
+c)单向消息
+d)顺序消息
+e)批量消息
+f)过滤消息
+g)事务消息
 
 ### RocketMQ 定时&延迟消息
 Rocket 默认定义了18个级别的延时消息，暂不支持指定时间戳的定时机制  
 但是阿里云ONS - RocketMQ 可以实现定时消息，实现原理暂不明确。。。
 
 ## RokcetMQ 顺序消息  
-Producer 指定消息存放队列
-<code>
-<pre> 
+```java 
+// Producer 指定消息存放队列
 new MessageQueueSelector(){
     public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg){
         return mqs.get(0);  //指定 index = 0 队列
     }
 }
-</pre>
-</code>
+```
 https://www.jianshu.com/p/2838890f3284
 注意：把消息发到同一个队列（queue），不是同一个topic，默认情况下一个topic包括4个queue 
 
@@ -33,7 +77,13 @@ consumer，除了知道自己持有哪些队列的锁，可以对这些队列进
 
 对于每一个队列，都有一个 objLock，在消费时对该 objLock 使用 synchronizd 加锁，保证同一时间只有一个线程在消费该队列。 
 
-## RokcetMQ 事务消息
+<code>
+正常情况可以保证完全的顺序消息,但如果发生类似Broker宕机等异常，导致队列总数变化，Hash取模后的值会发生改变，然后产生短暂的消息顺序不一致的情况
+</code>  
+<br/>
+
+
+## RokcetMQ 事务消息
 1. 同步消息无法保证事务性
 https://www.jianshu.com/p/d8a21ab2c2d3  
 使用RocketMQ发送消息的3种方法：可靠同步发送、可靠异步发送和单向发送

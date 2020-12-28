@@ -1,4 +1,5 @@
-1. 加载topic配置${user.home}/store/config/topics.json
+## topics.json 
+加载topic配置${user.home}/store/config/topics.json
 ```java
 {
   "dataVersion":{
@@ -25,7 +26,36 @@
 }
 ``` 
 
-2.加载消费进度偏移量  ${user.home}/store/config/consumerOffset.json
+## consumerFilter.json
+加载消费过滤信息  ${user.home}/store/config/consumerFilter.json
+```java
+{
+	"filterDataByTopic":{
+		"vjr-points-mall-topic":{
+			"groupFilterData":{
+				"SQLConsumerGroupName":{
+					"bloomFilterData":{
+						"bitNum":112,
+						"bitPos":[14,59,39]
+					},
+					"bornTime":1609123996497,
+					"clientVersion":1609124147160,
+					"consumerGroup":"SQLConsumerGroupName",
+					"dead":false,
+					"deadTime":0,
+					"expression":"(age is not null and age >=20)",
+					"expressionType":"SQL92",
+					"topic":"vjr-points-mall-topic"
+				}
+			},
+			"topic":"vjr-points-mall-topic"
+		}
+	}
+}
+```
+
+## consumerOffset.json
+加载消费进度偏移量  ${user.home}/store/config/consumerOffset.json
 ```java
 {
   "offsetTable":{
@@ -39,8 +69,9 @@
   } 
 }
 ```
- 
-3. 加载消费者订阅关系 ${user.home}/store/config/subscriptionGroup.json
+
+## subscriptionGroup.json 
+加载消费者订阅关系 ${user.home}/store/config/subscriptionGroup.json
 ```java
 {
   "dataVersion":{
@@ -57,6 +88,15 @@
     "retryQueueNums":1,
     "whichBrokerWhenConsumeSlowly":1 
   }
+}
+```
+
+## offsetTable
+加载延时信息 ${user.home}/store/config/subscriptionGroup.json
+```java
+{
+	"offsetTable":{2:3,5:0
+	}
 }
 ```
  

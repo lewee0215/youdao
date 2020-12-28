@@ -1,86 +1,14 @@
 # RocketMQ WAL 模式
 目前MQ的方案中都是基于WAL的方式实现的（RocketMQ、Kafka），日志文件会被过期删除，一般会保留最近一段时间的数据
 
-## RocketMQ 延时队列实现
-https://www.cnblogs.com/yizhou35/p/12026078.html
+# WAL: Write-Ahead Logging 预写日志系统
+https://blog.csdn.net/qq_14855971/article/details/105852637
+数据库中一种高效的日志算法，对于非内存数据库而言，磁盘I/O操作是数据库效率的一大瓶颈。在相同的数据量下，采用WAL日志的数据库系统在事务提交时，磁盘写操作只有传统的回滚日志的一半左右，大大提高了数据库磁盘I/O操作的效率，从而提高了数据库的性能
 
-### 消息写入中：
-在写入CommitLog之前，如果是延迟消息，替换掉消息的Topic和queueId(被替换为延迟消息特定的Topic，queueId则为延迟级别对应的id)
-消息写入CommitLog之后，提交dispatchRequest到DispatchService
-因为在第①步中Topic和QueueId被替换了，所以写入的ConsumeQueue实际上非真正消息应该所属的ConsumeQueue，而是写入到ScheduledConsumeQueue中（这个特定的Queue存放不会被消费）
+## mysql
+mysql 的 WAL，大家可能都比较熟悉。mysql 通过 redo、undo 日志实现 WAL。  
+redo log 称为重做日志，每当有操作时，在数据变更之前将操作写入 redo log，这样当发生掉电之类的情况时系统可以在重启后继续操作。  
+undo log 称为撤销日志，当一些变更执行到一半无法完成时，可以根据撤销日志恢复到变更之间的状态。mysql 中用 redo log 来在系统 Crash 重启之类的情况时修复数据（事务的持久性），而 undo log 来保证事务的原子性
 
-```java
-// Delay Delivery
-if (msg.getDelayTimeLevel() > 0) {
-    if (msg.getDelayTimeLevel() > this.defaultMessageStore.getScheduleMessageService().getMaxDelayLevel()) {
-        msg.setDelayTimeLevel(this.defaultMessageStore.getScheduleMessageService().getMaxDelayLevel());
-    }
-    // public static final String SCHEDULE_TOPIC = "SCHEDULE_TOPIC_XXXX";
-    topic = ScheduleMessageService.SCHEDULE_TOPIC; 
-    queueId = ScheduleMessageService.delayLevel2QueueId(msg.getDelayTimeLevel());
-
-    // Backup real topic, queueId
-    // public static final String PROPERTY_REAL_TOPIC = "REAL_TOPIC";
-    MessageAccessor.putProperty(msg, MessageConst.PROPERTY_REAL_TOPIC, msg.getTopic()); 
-    // public static final String PROPERTY_REAL_QUEUE_ID = "REAL_QID";
-    MessageAccessor.putProperty(msg, MessageConst.PROPERTY_REAL_QUEUE_ID, String.valueOf(msg.getQueueId())); 
-
-    msg.setPropertiesString(MessageDecoder.messageProperties2String(msg.getProperties()));
-
-    msg.setTopic(topic);
-    msg.setQueueId(queueId);
-}
-```
-
-###  Schedule过程中：
-给每个Level设置定时器，从ScheduledConsumeQueue中读取信息
-如果ScheduledConsumeQueue中的元素已近到时，那么从CommitLog中读取消息内容，恢复成正常的消息内容写入CommitLog
-写入CommitLog后提交dispatchRequest给DispatchService
-因为在写入CommitLog前已经恢复了Topic等属性，所以此时DispatchService会将消息投递到正确的ConsumeQueue中
-
-#### shedule 初始化
-https://www.cnblogs.com/heihaozi/p/13259125.html  
-遍历所有延迟级别，根据延迟级别获得对应队列的偏移量，如果偏移量不存在，则设置为0。然后为每个延迟级别创建定时任务，第一次启动任务延迟为1秒，第二次及以后的启动任务延迟才是延迟级别相应的延迟时间。  
-
-创建了一个定时任务，用于持久化每个队列消费的偏移量。持久化的频率由flushDelayOffsetInterval属性进行配置，默认为10秒
-```java
-// 遍历所有延迟级别
-for (Map.Entry<Integer, Long> entry : this.delayLevelTable.entrySet()) {
-    // key为延迟级别
-    Integer level = entry.getKey();
-    // value为延迟级别对应的毫秒数
-    Long timeDelay = entry.getValue();
-    // 根据延迟级别获得对应队列的偏移量
-    Long offset = this.offsetTable.get(level);
-    // 如果偏移量为null，则设置为0
-    if (null == offset) {
-        offset = 0L;
-    }
-
-    if (timeDelay != null) {
-        // 为每个延迟级别创建定时任务，
-        // 第一次启动任务延迟为FIRST_DELAY_TIME，也就是1秒
-        this.timer.schedule(
-                new DeliverDelayedMessageTimerTask(level, offset), FIRST_DELAY_TIME);
-    }
-}
-
-// 延迟10秒后每隔flushDelayOffsetInterval执行一次任务，
-// 其中，flushDelayOffsetInterval默认配置也为10秒
-this.timer.scheduleAtFixedRate(new TimerTask() {
-
-    @Override
-    public void run() {
-        try {
-            // 持久化每个队列消费的偏移量
-            if (started.get()) ScheduleMessageService.this.persist();
-        } catch (Throwable e) {
-            log.error("scheduleAtFixedRate flush exception", e);
-        }
-    }
-}, 10000, this.defaultMessageStore
-    .getMessageStoreConfig().getFlushDelayOffsetInterval());
-```
-
-#### 消息重发
-DeliverDelayedMessageTimerTask.executeOnTimeup()
+## sqlite wal & rollback journal
+https://blog.csdn.net/weixin_33946020/article/details/87951511

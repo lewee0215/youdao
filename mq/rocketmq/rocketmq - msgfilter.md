@@ -1,4 +1,6 @@
 # RocketMQ 消息过滤
+消息在Broker 端过滤。Broker 只将消息消费者感兴趣的消息发送给消息消费者。
+
 https://www.pianshen.com/article/4525325100/  
 消息过滤包含基于表达式和基于类模式两种形式，其中表达式过滤又包含TAG过滤和SQL92过滤
 RocketMQ 的消息过滤方式有别于其他消息中间件，是在订阅时，再做过滤

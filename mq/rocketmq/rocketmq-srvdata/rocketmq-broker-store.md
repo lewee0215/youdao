@@ -69,7 +69,6 @@
   } 
 }
 ```
-
 ## subscriptionGroup.json 
 加载消费者订阅关系 ${user.home}/store/config/subscriptionGroup.json
 ```java

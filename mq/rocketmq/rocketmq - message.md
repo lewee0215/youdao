@@ -166,20 +166,20 @@ consumer，除了知道自己持有哪些队列的锁，可以对这些队列进
 <br/>
 
 ## RokcetMQ 事务消息
-1. 同步消息无法保证事务性
-https://www.jianshu.com/p/d8a21ab2c2d3  
+1. 同步消息无法保证事务性  
+https://www.jianshu.com/p/d8a21ab2c2d3  
 使用RocketMQ发送消息的3种方法：可靠同步发送、可靠异步发送和单向发送
 
 2. 事务消息
-Producer向Broker投递一个事务消息，并且带有唯一的key作为参数（幂等性)
-Broker预提交消息（在Broker本地做了存储，但是该消息的状态对Consumer不可见）
+Producer向Broker投递一个事务消息，并且带有唯一的key作为参数（幂等性)  
+Broker预提交消息（在Broker本地做了存储，但是该消息的状态对Consumer不可见）  
 
-Broker预提交成功后回调Producer的executeLocalTransaction方法
-Broker超时未接受到Producer的反馈，会定时重试调用Producer.checkLocalTransaction，Producer会根据自己的执行情况Ack给Broker
+Broker预提交成功后回调Producer的executeLocalTransaction方法  
+Broker超时未接受到Producer的反馈，会定时重试调用Producer.checkLocalTransaction，Producer会根据自己的执行情况Ack给Broker  
 
-Producer提交业务(比如记录最终成功投递的日志），并根据业务提交的执行情况，向Broker反馈Commit 或者回滚
+Producer提交业务(比如记录最终成功投递的日志），并根据业务提交的执行情况，向Broker反馈Commit 或者回滚  
 
-### 事务消息状态
+### 事务消息状态 TransactionStatus
 TransactionStatus.CommitTransaction:   
 commit transaction，it means that allow consumers to consume this message.
 
@@ -200,6 +200,7 @@ if (msg.getDelayTimeLevel() != 0) {
     MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_DELAY_TIME_LEVEL);
 }
 
+// public static final String PROPERTY_TRANSACTION_PREPARED = "TRAN_MSG";
 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_TRANSACTION_PREPARED, "true");
 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_PRODUCER_GROUP, this.defaultMQProducer.getProducerGroup());  
 ```
@@ -212,11 +213,14 @@ public PutMessageResult putHalfMessage(MessageExtBrokerInner messageInner) {
 }
 
 private MessageExtBrokerInner parseHalfMessageInner(MessageExtBrokerInner msgInner) {
+    // public static final String PROPERTY_REAL_TOPIC = "REAL_TOPIC";
     MessageAccessor.putProperty(msgInner, MessageConst.PROPERTY_REAL_TOPIC, msgInner.getTopic());
-    MessageAccessor.putProperty(msgInner, MessageConst.PROPERTY_REAL_QUEUE_ID,
-        String.valueOf(msgInner.getQueueId()));
-    msgInner.setSysFlag(
-        MessageSysFlag.resetTransactionValue(msgInner.getSysFlag(), MessageSysFlag.TRANSACTION_NOT_TYPE));
+
+    // public static final String PROPERTY_REAL_QUEUE_ID = "REAL_QID";
+    MessageAccessor.putProperty(msgInner, MessageConst.PROPERTY_REAL_QUEUE_ID,String.valueOf(msgInner.getQueueId()));
+    msgInner.setSysFlag(MessageSysFlag.resetTransactionValue(msgInner.getSysFlag(), MessageSysFlag.TRANSACTION_NOT_TYPE));
+        
+    // public static final String RMQ_SYS_TRANS_HALF_TOPIC = "RMQ_SYS_TRANS_HALF_TOPIC";
     msgInner.setTopic(TransactionalMessageUtil.buildHalfTopic());
     msgInner.setQueueId(0);
     msgInner.setPropertiesString(MessageDecoder.messageProperties2String(msgInner.getProperties()));
@@ -228,9 +232,48 @@ private MessageExtBrokerInner parseHalfMessageInner(MessageExtBrokerInner msgInn
 
 ### Broker 处理事务消息rollback and commit
 https://blog.csdn.net/hosaos/article/details/90240260
+EndTransactionProcessor.processRequest(ChannelHandlerContext ctx, RemotingCommand request)
+> RMQ_SYS_TRANS_HALF_TOPIC：prepare消息的主题，事务消息首先先进入到该主题。  
+> RMQ_SYS_TRANS_OP_HALF_TOPIC：当消息服务器收到事务消息的提交或回滚请求后，会将消息存储在该主题下
+
+#### 事务提交 Commit
+1. 根据commitLog查询对应事务消息，对应TransactionalMessageService#commitMessage方法
+2. 从消息属性 PROPERTY_REAL_TOPIC 及 PROPERTY_REAL_QUEUE_ID 中，取出并恢复消息原来的 topic，queueId，对应endMessageTransaction方法
+3. 调用 MessageStore#putMessage 将还原后的消息存储到commitLog中，对应sendFinalMessage方法
+4. 删除消息(将消息移到topic为RMQ_SYS_TRANS_OP_HALF_TOPIC队列中)，对应TransactionalMessageService#deletePrepareMessage方法  
+   ```java
+    @Override
+    public boolean deletePrepareMessage(MessageExt msgExt) {
+        if (this.transactionalMessageBridge.putOpMessage(msgExt, TransactionalMessageUtil.REMOVETAG)) {
+            log.info("Transaction op message write successfully. messageId={}, queueId={} msgExt:{}", msgExt.getMsgId(), msgExt.getQueueId(), msgExt);
+            return true;
+        } else {
+            log.error("Transaction op message write failed. messageId is {}, queueId is {}", msgExt.getMsgId(), msgExt.getQueueId());
+            return false;
+        }
+    }
+
+    public boolean putOpMessage(MessageExt messageExt, String opType) {
+        MessageQueue messageQueue = new MessageQueue(messageExt.getTopic(),
+            this.brokerController.getBrokerConfig().getBrokerName(), messageExt.getQueueId());
+        if (TransactionalMessageUtil.REMOVETAG.equals(opType)) {
+            return addRemoveTagInTransactionOp(messageExt, messageQueue);
+        }
+        return true;
+    }
+   ```
+
+#### 事务回滚 Rollback
+1. 调用TransactionalMessageService#deletePrepareMessage方法，将消息put到topic为RMQ_SYS_TRANS_OP_HALF_TOPIC的队列中  
+
+#### 事务消息回查 Check
+TransactionalMessageCheckService.check()
+1. 先从halfQueue，opQueue中取出对应offSet
+2. 根据halfQueue，opQueue判断出opQueue中消息处理状态，处理过的opQueue offSet放入doneOpOffset中
+3. 调用TransactionListener#checkLocalTransaction来得到事务执行状态码localTransactionState，再根据localTransactionState来发送commit/rollback请求
 
 ## RocketMQ Producer 生产者消息重试
-https://www.cnblogs.com/qdhxhz/p/11117379.html
+https://www.cnblogs.com/qdhxhz/p/11117379.html  
 消息重试只针对 sendResult.getSendStatus() != SendStatus.SEND_OK 的情况
 
 ```java

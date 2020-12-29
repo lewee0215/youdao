@@ -48,11 +48,44 @@ org.apache.rocketmq.namesrv.routeinfo。RouteInfoManager
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 ```
+集群信息 : cluster -> broker -> topic -> queue   
+活跃Broker信息 ： brokerLiveTable  
+消息过滤服务器  :  filterServerTable
+
+```java
+public class BrokerData implements Comparable<BrokerData> {
+    private String cluster;
+    private String brokerName;
+    private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs;
+}
+
+public class QueueData implements Comparable<QueueData> {
+    private String brokerName;
+    private int readQueueNums;
+    private int writeQueueNums;
+    private int perm;
+    private int topicSynFlag;
+}
+
+class BrokerLiveInfo {
+    private long lastUpdateTimestamp;  // 存储上次收到Broker 心跳包的时间
+    private DataVersion dataVersion;
+    private Channel channel;
+    private String haServerAddr;
+}
+```
 
 ### 路由注册
+Broker 启动时向集群中所有的NameServer发送心跳语句，每隔30s向集群中所有NameServer 发送心跳包  
+NameServer收到Broker心跳包后更新brokerLiveTable 缓存中BrokerLiveInfo 的lastUpdateTimestamp,
+同时维护 cluster -> broker -> topic -> queue  关系  
+<code>brokerLiveTable  使用读写锁的方式操作</code>  
+
 
 ### 路由删除
+1. NameServer 每隔10s 扫描brokerLiveTable ，如果连续 120s 没有收到心跳包， NameServer 将移除该Broker 的路由信息同时关闭Socket 连接。
+2. Broker 正常下线，执行 unregisterBroker 指令
 
 ### 路由发现
-
+RocketMQ 路由发现是非实时的，当Topic 路由出现变化后， NameServer 不主动推送给客户端， 而是由客户端定时拉取主题最新的路由
 

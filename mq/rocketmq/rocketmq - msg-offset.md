@@ -8,7 +8,7 @@ CONSUME_FROM_FIRST_OFFSET |从队列最开始开始消费，即设置从最小�
 CONSUME_FROM_TIMESTAMP |从某个时间点开始消费，和setConsumeTimestamp()配合使用，默认为消费者启动之前的30分钟处开始消费
 
 <pre>
-注意设置读取位置不是每次都有效，它的优先级默认在 Offset Store后面 ， 比如 在 DefaultMQPushConsumer 的 BROADCASTING 方式 下 ，默 认 是 从 Broker 里读取某个 Topic 对 应 ConsumerGroup 的 Offset， 当读 取不到 Offset 的时候， ConsumeFromWhere 的设置才生效 。 
+注意设置读取位置不是每次都有效，它的优先级默认在 Offset Store后面 ， 比如在 DefaultMQPushConsumer 的 BROADCASTING 方式下 ，默认是从 Broker 里读取某个 Topic 对应 ConsumerGroup 的 Offset， 当读取不到 Offset 的时候， ConsumeFromWhere 的设置才生效 。 
 
 大部分情况下这个设置在 Consumer Group初次启动时有效。 如果 Consumer正常运行后被停止， 然后再启动， 会 接着上次的 Offset开始消费， ConsumeFromWhere 的设置元效。
 </pre>

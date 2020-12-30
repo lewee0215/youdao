@@ -40,5 +40,190 @@ transientStorePoolEnable=true
 2. 扩容
 对集群中的 Topic 进行拆分，即将一部分 Topic 迁移到其他集群中，降低集群的负载
 
+## Producer端 Broker故障延迟机制
+Mq在发送端引入了Broker故障转移机制，能够在某个Broker异常时，根据当次请求RT时间，预估出Broker的故障持续时间，在这段持续时间内暂时屏蔽该Broker，将消息发往其他Broker
+https://blog.csdn.net/hosaos/article/details/99624467
+
+在默认的消息发送方法前会调用 selectOneMessageQueue 方法  
+无论消息发送成功或是抛出异常都会调用 updateFaultItem 方法用于维护可用的 Broker 池
+
+```java
+private SendResult sendDefaultImpl(Message msg,final CommunicationMode communicationMode,
+        final SendCallback sendCallback,
+        final long timeout){
+
+    //定义重试次数
+    int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
+    int times = 0;
+    ...
+
+    for (; times < timesTotal; times++) {
+        String lastBrokerName = null == mq ? null : mq.getBrokerName();
+        MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
+        ...
+        try{
+            if (times > 0) {
+                //Reset topic with namespace during resend.
+                msg.setTopic(this.defaultMQProducer.withNamespace(msg.getTopic()));
+            }
+            ......
+            sendResult = this.sendKernelImpl(msg, mq, communicationMode, sendCallback, topicPublishInfo, timeout - costTime);
+            this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, false);
+        }
+        catch(RemotingException,MQClientException,MQBrokerException){
+            .....
+            this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, true);
+        }
+    }
+}
+
+```
+
+即如果消息发送时间越久，mq会认为broker不可用的时长越久，broker不可用时长是个经验值，
+如果传入isolation为true，即发送异常的情况,表示默认当前发送时长为30000L，即broker不可用时长为600000L
+```java
+/**
+ * currentLatency : 正常发送消息耗时
+ * isolation:是否需要隔离 (false = 正常发送 ，true = 发送异常)
+ */
+public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
+    if (this.sendLatencyFaultEnable) {
+        // 根据消息异常情况更新 FaultItem 的 duration (暂停使用时间)
+        long duration = computeNotAvailableDuration(isolation ? 30000 : currentLatency);
+        this.latencyFaultTolerance.updateFaultItem(brokerName, currentLatency, duration);
+    }
+}
+
+/**
+ * 计算分档的不可用时间
+ * currentLatency : 发送当前消息的耗时时间
+ */
+private long computeNotAvailableDuration(final long currentLatency) {
+    // private long[] latencyMax = {50L, 100L, 550L, 1000L, 2000L, 3000L, 15000L};
+    // private long[] notAvailableDuration = {0L, 0L, 30000L, 60000L, 120000L, 180000L, 600000L};
+    for (int i = latencyMax.length - 1; i >= 0; i--) {
+        if (currentLatency >= latencyMax[i])
+            return this.notAvailableDuration[i];
+    }
+
+    return 0;
+}
+
+/**
+ * 维护 Broker 的不可用列表
+ */
+@Override
+public void updateFaultItem(final String name, final long currentLatency, final long notAvailableDuration){
+    // faultItemTable = new ConcurrentHashMap<String, FaultItem>(16);
+    FaultItem old = this.faultItemTable.get(name);
+    if (null == old) {
+        final FaultItem faultItem = new FaultItem(name);
+        faultItem.setCurrentLatency(currentLatency);
+        faultItem.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
+
+        old = this.faultItemTable.putIfAbsent(name, faultItem);
+        if (old != null) {
+            old.setCurrentLatency(currentLatency);
+            old.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
+        }
+    } else {
+        old.setCurrentLatency(currentLatency);
+        old.setStartTimestamp(System.currentTimeMillis() + notAvailableDuration);
+    }
+}
+
+class FaultItem implements Comparable<FaultItem>{
+
+    @Override
+    public int compareTo(final FaultItem other){
+        // 根据 currentLatency(当前耗时) -> startTimestamp(可开始使用时间戳)
+        // startTimestamp = updateFaultItem 方法调用时 ： System.currentTimeMillis() + notAvailableDuration,
+    }
+
+    // 判断 Broker 是否可用
+    public boolean isAvailable() {
+        return (System.currentTimeMillis() - startTimestamp) >= 0;
+    }
+}
+
+/**
+ * 队列选择方法
+ */
+public MessageQueue selectOneMessageQueue(final TopicPublishInfo tpInfo, final String lastBrokerName) {
+    // 判断是否开始延时容错, 默认是不启用故障延迟机制的
+    if (this.sendLatencyFaultEnable) {
+        try {
+            // 轮训获取 Queue
+            int index = tpInfo.getSendWhichQueue().getAndIncrement();
+            for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
+                int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
+                if (pos < 0)
+                    pos = 0;
+                MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
+                    // 如果上一次发送的Broker是可用的，则从当前Broker选择遍历循环选择一个
+                    if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
+                        return mq;
+                }
+            }
+
+            // 如果不存在上诉最优解，取延时最小的Broker
+            final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
+            int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
+            if (writeQueueNums > 0) {
+                final MessageQueue mq = tpInfo.selectOneMessageQueue();
+                if (notBestBroker != null) {
+                    mq.setBrokerName(notBestBroker);
+                    mq.setQueueId(tpInfo.getSendWhichQueue().getAndIncrement() % writeQueueNums);
+                }
+                return mq;
+            } else {
+                // 排除没有可写队列的Broker
+                latencyFaultTolerance.remove(notBestBroker);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred when selecting message queue", e);
+        }
+
+        // 如果没有最优项，则轮训取下一个
+        return tpInfo.selectOneMessageQueue();
+    }
+
+    return tpInfo.selectOneMessageQueue(lastBrokerName);
+}
+
+// 排除上次发送的Broker
+// 如果取到的消息队列还是上次发送失败的broker，则重新对sendWhichQueue+1
+public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
+    if (lastBrokerName == null) {
+        return selectOneMessageQueue();
+    } else {
+        int index = this.sendWhichQueue.getAndIncrement();
+        for (int i = 0; i < this.messageQueueList.size(); i++) {
+            int pos = Math.abs(index++) % this.messageQueueList.size();
+            if (pos < 0)
+                pos = 0;
+            MessageQueue mq = this.messageQueueList.get(pos);
+            if (!mq.getBrokerName().equals(lastBrokerName)) {
+                return mq;
+            }
+        }
+        return selectOneMessageQueue();
+    }
+}
+
+// 默认根据 sendWhichQueue 自增特性轮训发送
+// private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
+public MessageQueue selectOneMessageQueue() {
+    int index = this.sendWhichQueue.getAndIncrement();
+    int pos = Math.abs(index) % this.messageQueueList.size();
+    if (pos < 0)
+        pos = 0;
+    return this.messageQueueList.get(pos);
+}
+
+```
+
+
 
 

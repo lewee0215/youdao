@@ -27,7 +27,6 @@ Docker图像用于隔离测试和云隔离集群
 
 ## RocketMQ 使用详解
 RocketMQ 目前在阿里集团被广泛应用于交易、充值、流计算、消息推送、日志流式处理、binlog分发等场景，设计时参考了 Kafka
-
 RocketMQ使用的消息原语是At Least Once，所以consumer可能多次收到同一个消息，此时务必做好幂等
 
 Rocketmq相比于Rabbitmq、kafka具有主要优势特性有：

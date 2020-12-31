@@ -14,13 +14,13 @@ commitlog| 消息存储目录
 config| 运行时的配置信息，包含主席消息过滤信息、集群消费,模式消息消费进度、延迟消息队列拉取进度、消息消费组配置信息、topic配置属性等  
 
 ## CommitLog
-https://zhuanlan.zhihu.com/p/92125985
+https://zhuanlan.zhihu.com/p/92125985  
 RocketMQ将所有消息存储在一起，以顺序IO的方式写入磁盘，充分利用了磁盘顺序写减少了IO争用提高数据存储的性能
 
 CommitLog.this.topicQueueTable.put(key, queueOffset)，其中的key是 topic-queueId, queueOffset是当前这个key中的消息数，每增加一个消息增加一(不会自减)；
 
-CommitLog的清理机制：
-● 按时间清理，rocketmq默认会清理3天前的commitLog文件；
+CommitLog的清理机制：  
+● 按时间清理，rocketmq默认会清理3天前的commitLog文件；  
 ● 按磁盘水位清理：当磁盘使用量到达磁盘容量75%，开始清理最老的commitLog文件。
 
 ![alt text](https://pic4.zhimg.com/80/v2-cbf1c787be956417cf2427b23e643eef_1440w.jpg "CommitLog中的存储格式")
@@ -65,9 +65,13 @@ ConsumeQueue中只存储路由到该queue中的消息在CommitLog中的offset，
 
 ## Checkpoint 文件
 记录 CommitLog，ConsumeQueue，IndexFile 的刷盘时间点，文件固定长度为 4k，其中只用该文件的前 24个字节
+physicMsgTimestamp : commitlog 文件刷盘时间点(8字节)  
+logicsMsgTimestamp ： 消息消费队列文件刷盘时间点(8字节) 
+indexMsgTimestamp ： 索引文件刷盘时间点(8字节) 
 
 ## Index 索引文件
 https://blog.csdn.net/Nuan_Feng/article/details/108328883
+ConsumerQueue是通过偏移量offset去CommitLog文件中查找消息，但实际工作应用中，我们想查找某条具体的消息，并不知道offset值
 
 index log索引文件使用的是hash存储机制, key通过 (topic+key)%槽位数得到,value为commitlog的物理偏移量phyOffset
 

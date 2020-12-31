@@ -1,5 +1,8 @@
 ## 消息ID 详解
 https://blog.csdn.net/prestigeding/article/details/104739950
+消息发送规范要求是主题名称、消息体不能为空、消息长度不能等于0 且默认不能超过允许
+发送消息的最大长度4M (maxMessageSize=l024 * 1024 * 4 ）
+
 从消息发送的结果可以得知，RocketMQ 发送的返回结果会返回msgId 与 offsetMsgId
 > msgId：该ID 是消息发送者在消息发送时会首先在客户端生成，全局唯一，在 RocketMQ 中该 ID 还有另外的一个叫法：uniqId，无不体现其全局唯一性。  
 > offsetMsgId：消息偏移ID，该 ID 记录了消息所在集群的物理地址，主要包含所存储 Broker 服务器的地址( IP 与端口号)以及所在commitlog 文件的物理偏移量
@@ -297,10 +300,18 @@ switch (communicationMode) {
 ```
 
 # RocketMQ Consumer 消费之消息重试
-https://help.aliyun.com/document_detail/43490.html?spm=a2c4g.11186623.4.4.609c52c3hxFwDV  
+https://help.aliyun.com/document_detail/43490.html 
 
 ## 顺序消息的重试
 对于顺序消息，当消费者消费消息失败后，消息队列RocketMQ版会自动不断地进行消息重试（每次间隔时间为1秒），这时，应用会出现消息消费被阻塞的情况
+```java
+// 消息消费失败情况下
+// 队列被阻塞，需要慎重地处理异常
+return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT; 
+
+// 可根据重复消费次数进行异常忽略的处理，走特殊业务流程
+int reconsumeTimes = message.getReconsumeTimes();
+```
 
 ## 无序消息的重试
 对于无序消息（普通、定时、延时、事务消息），当消费者消费消息失败时，您可以通过设置返回状态达到消息重试的结果。
@@ -320,7 +331,11 @@ https://help.aliyun.com/document_detail/43490.html?spm=a2c4g.11186623.4.4.609c52
 7     | 5m     | 15    | 1h
 8     | 6m     | 16    | 2h
 
-https://www.cnblogs.com/allenwas3/p/11922650.html
+消息队列RocketMQ版允许Consumer启动的时候设置最大重试次数
+* 最大重试次数小于等于16次，则重试时间间隔同上表描述。
+* 最大重试次数大于16次，超过16次的重试时间间隔均为每次2小时。
+
+https://www.cnblogs.com/allenwas3/p/11922650.html  
 消息消费超过最大次数或者客户端配置了直接发送到死信队列（%DLQ%+consumerGroup），则把消息发送到死信队列，否则把消息发送 retry topic (%RETRY% +consumerGroup)
 
 虽然看起来是把消息直接写入 %RETRY% + consumerGroup,但其实在 putMessage 的时候，会把消息写入 SCHEDULE_TOPIC_XXXX

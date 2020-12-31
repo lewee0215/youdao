@@ -32,7 +32,7 @@ magicCode | 4字节的魔数，是固定值，有MESSAGE_MAGIC_CODE和BLANK_MAGI
 bodyCRC | 4字节的CRC，是消息体的校验码，用于防止网络、硬件等故障导致数据与发送时不一样带来的问题
 queueId | 4字节的queueId，表示消息发到了哪个MessageQueue(逻辑上相当于kakka的partition)
 flag|4字节的flag，flag是创建Message对象时由生产者通过构造器设定的flag值
-queueOffset8|字节的queueOffset，表示在queue中的偏移量
+queueOffset|8字节的queueOffset，表示在queue中的偏移量
 physicalPosition|8字节的physicalPosition，表示在存储文件中的偏移量
 sysFlag|4字节sysFlag，是生产者相关的信息标识，具体生产逻辑可以看相关代码
 msg born timestamp| 8字节消息创建时间
@@ -51,14 +51,18 @@ Properties|Properties的内容，也不是固定长度，和前面的2字节prop
 <br/>
 
 ## ConsumeQueue
-ConsumerQueue相当于CommitLog的索引文件，消费者消费时会先从ConsumerQueue中查找消息的在commitLog中的offset，再去CommitLog中找元数据。
-如果某个消息只在CommitLog中有数据，没在ConsumerQueue中， 则消费者无法消费，Rocktet的事务消息就是这个原理
-Consumequeue类对应的是每个topic和queuId下面的所有文件，相当于字典的目录用来指定消息在消息的真正的物理文件commitLog上的位置
+ConsumerQueue相当于CommitLog的索引文件，消费者消费时会先从ConsumerQueue中查找消息的在commitLog中的offset，再去CommitLog中找元数据。  
+如果某个消息只在CommitLog中有数据，没在ConsumerQueue中， 则消费者无法消费，Rocktet的事务消息就是这个原理  
+Consumequeue类对应的是每个 topic-queuId 下面的所有文件，相当于字典的目录用来指定消息在消息的真正的物理文件commitLog上的位置  
+<font color='yellow'>tags HashCode 存储在 ConsumeQueue </font>  
 消息的起始物理偏移量physical offset(long 8字节)+消息大小size(int 4字节)+tagsCode(long 8字节)
 
-● 每个topic下的每个queue都有一个对应的consumequeue文件。
-● 文件默认存储路径：${user.home} \store\consumequeue\${topicName}\${queueId}\${fileName}
+● 每个topic下的每个queue都有一个对应的consumequeue文件。  
+● 文件默认存储路径：${user.home} \store\consumequeue\${topicName}\${queueId}\${fileName}  
 ● 每个文件由30W条数据组成，每条数据的大小为20个字节，从而每个文件的默认大小为600万个字节（consume queue中存储单元是一个20字节定长的数据）是顺序写顺序读
+
+> 每个cosumequeue文件的名称fileName，名字长度为20位，左边补零，剩余为起始偏移量；  
+比如00000000000000000000代表了第一个文件，起始偏移量为0，文件大小为600W，当第一个文件满之后创建的第二个文件的名字为00000000000006000000，起始偏移量为6000000
 
 ConsumeQueue中只存储路由到该queue中的消息在CommitLog中的offset，消息的大小以及消息所属的tag的hash（tagCode）
 ![alt text](https://pic4.zhimg.com/80/v2-14002dfc29ac5d12b0109c8f80ade4e7_1440w.jpg "CommitLog中的存储格式")
@@ -92,7 +96,6 @@ indexCount|已使用的 Index 条目个数
 一个 IndexFile 默认包含 500W 个 Hash 槽，每个 Hash 槽存储的是落在该 Hash 槽的 hashcode 最新的 Index 的索引
 
 ### Index 条目列表
-
 字段名称 | 字段描述
 :-- | :--
 hashcode|key 的 hashcode  

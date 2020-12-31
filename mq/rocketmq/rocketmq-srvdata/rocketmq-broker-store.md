@@ -56,6 +56,7 @@
 
 ## consumerOffset.json
 加载消费进度偏移量  ${user.home}/store/config/consumerOffset.json
+进度信息key值 ： topic + consumer_group
 ```java
 {
   "offsetTable":{

@@ -1,5 +1,24 @@
+## 消息Message 构造
+```java
+// Message 常用属性通过 系统Properties 处理
+public static final String PROPERTY_KEYS = "KEYS";  // msg.setKeys()
+public static final String PROPERTY_TAGS = "TAGS";  // msg.setTags()
+public static final String PROPERTY_WAIT_STORE_MSG_OK = "WAIT"; // 默认 waitStoreMsgOK = true
+public static final String PROPERTY_DELAY_TIME_LEVEL = "DELAY"; // msg.setDelayTimeLevel()
+public static final String PROPERTY_INSTANCE_ID = "INSTANCE_ID";
+public static final String PROPERTY_BUYER_ID = "BUYER_ID";
+
+// MessageClientIDSetter.setUniqID(msg); 生成MSGID
+public static final String PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX = "UNIQ_KEY";
+
+// Broker 端消息属性
+String uniqueKey = properties.get(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
+properties.put(MessageConst.PROPERTY_MSG_REGION, this.brokerController.getBrokerConfig().getRegionId());
+properties.put(MessageConst.PROPERTY_TRACE_SWITCH, String.valueOf(this.brokerController.getBrokerConfig().isTraceOn()));
+```
+
 ## 消息ID 详解
-https://blog.csdn.net/prestigeding/article/details/104739950
+https://blog.csdn.net/prestigeding/article/details/104739950  
 消息发送规范要求是主题名称、消息体不能为空、消息长度不能等于0 且默认不能超过允许
 发送消息的最大长度4M (maxMessageSize=l024 * 1024 * 4 ）
 

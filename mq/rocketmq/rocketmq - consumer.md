@@ -1,5 +1,7 @@
+# RocketMQ 消息订阅
+同一消费者也可以同时订阅同一个Topic的多个Tag，多个Tag之间通过||进行分隔
 
-# RocketMQ.Consumer
+# RocketMQ.Consumer 
 如果消息消费模式为集群模式，默认为该消费组订阅重试主题 consumer.start() => copySubscription()
 ```java
 // DefaultMQPullConsumer.start().initOffsetStore()

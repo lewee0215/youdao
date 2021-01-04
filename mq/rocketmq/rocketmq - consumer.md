@@ -2,6 +2,58 @@
 消息拉取命令Code : RequestCode.PULL_MESSAGE  
 同一消费者也可以同时订阅同一个Topic的多个Tag，多个Tag之间通过||进行分隔
 
+## 消费者核心拉取方法： PullAPIWrapper.pullKernelImpl
+```java
+// 计算数据来源的 Broker
+FindBrokerResult findBrokerResult =
+            this.mQClientFactory.findBrokerAddressInSubscribe(mq.getBrokerName(),
+                this.recalculatePullFromWhichNode(mq), false);
+
+// private ConcurrentMap<MessageQueue, AtomicLong/* brokerId */> pullFromWhichNodeTable =
+//         new ConcurrentHashMap<MessageQueue, AtomicLong>(32);
+public long recalculatePullFromWhichNode(final MessageQueue mq) {
+    if (this.isConnectBrokerByUser()) {
+        return this.defaultBrokerId;
+    }
+
+    // 建议值
+    AtomicLong suggest = this.pullFromWhichNodeTable.get(mq);
+    if (suggest != null) {
+        return suggest.get();
+    }
+
+    return MixAll.MASTER_ID;
+}
+
+// 优先选取 brokerName 对应的主节点，如果不存在则从从节点拉取
+// private final ConcurrentMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable =
+//         new ConcurrentHashMap<String, HashMap<Long, String>>();
+public FindBrokerResult findBrokerAddressInSubscribe(final String brokerName,final long brokerId,final boolean onlyThisBroker) {
+    String brokerAddr = null;
+    boolean slave = false;
+    boolean found = false;
+
+    HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
+    if (map != null && !map.isEmpty()) {
+        brokerAddr = map.get(brokerId);
+        slave = brokerId != MixAll.MASTER_ID;
+        found = brokerAddr != null;
+
+        // 如果主节点掉线
+        if (!found && !onlyThisBroker) {
+            Entry<Long, String> entry = map.entrySet().iterator().next();
+            brokerAddr = entry.getValue();
+            slave = entry.getKey() != MixAll.MASTER_ID;
+            found = true;
+        }
+    }
+    if (found) {
+        return new FindBrokerResult(brokerAddr, slave, findBrokerVersion(brokerName, brokerAddr));
+    }
+    return null;
+}
+```
+
 # RocketMQ.Consumer 
 如果消息消费模式为集群模式，默认为该消费组订阅重试主题 consumer.start() => copySubscription()
 ```java

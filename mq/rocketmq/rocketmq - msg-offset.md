@@ -13,6 +13,17 @@ CONSUME_FROM_TIMESTAMP |从某个时间点开始消费，和setConsumeTimestamp
 大部分情况下这个设置在 Consumer Group初次启动时有效。 如果 Consumer正常运行后被停止， 然后再启动， 会 接着上次的 Offset开始消费， ConsumeFromWhere 的设置元效。
 </pre>
 
+### 消费者 ProceeQueue
+消费者线程池每处理完一个消息消费任务（ ConsumeRequest ）时会从ProceeQueue中移除本批消费的消息，并返回ProceeQueue 中最小的偏移量，用该偏移量更新消息队列  
+> 消费进度，也就是说更新消费进度与消费任务中的消息没什么关系,消息消费进度的推进取决于ProceeQueue 中偏移量最小的消息消费速度
+
+
+```java
+
+
+TreeMap<Long, MessageExt> msgTreeMap ：消息存储容器
+```
+
 ### 消息偏移量 Offset  
 https://www.cnblogs.com/jwen1994/p/12369913.html  
 
@@ -126,10 +137,4 @@ private void initOffsetStore() throws MQClientException {
         this.offsetStore.load();
     }
 ```
-
-> message queue 是无限长的数组，一条消息进来下标就会涨1，下标就是 offset，消息在某个 MessageQueue 里的位置，通过 offset 的值可以定位到这条消息，或者指示 Consumer 从这条消息开始向后处理。  
-
-> message queue 中的 maxOffset 表示消息的最大 offset，maxOffset 并不是最新的那条消息的 offset，而是最新消息的 offset+1，minOffset 则是现存在的最小 offset。
-
-> fileReserveTime=48 默认消息存储48小时后，消费会被物理地从磁盘删除，message queue 的minOffset 也就对应增长。所以比 minOffset 还要小的那些消息已经不在 broker上了，就无法被消费
 

@@ -1,4 +1,5 @@
 # RocketMQ 消息订阅
+消息拉取命令Code : RequestCode.PULL_MESSAGE  
 同一消费者也可以同时订阅同一个Topic的多个Tag，多个Tag之间通过||进行分隔
 
 # RocketMQ.Consumer 
@@ -21,8 +22,78 @@ switch (this.defaultLitePullConsumer.getMessageModel()) {
 
 this.offsetStore.load();
 
-# DefaultMQPullConsumer.start()
+# DefaultLitePullConsumer.start()
+消息拉取核心类： PullMessageService
 消息分发策略：new AllocateMessageQueueAveragely();
+```java
+// PullMessageService.run()
+public void run() {
+    log.info(this.getServiceName() + " service started");
+
+    while (!this.isStopped()) {
+        // private final LinkedBlockingQueue<PullRequest> pullRequestQueue = new LinkedBlockingQueue<PullRequest>();
+        try {
+            PullRequest pullRequest = this.pullRequestQueue.take();
+            this.pullMessage(pullRequest);
+        } catch (InterruptedException ignored) {
+        } catch (Exception e) {
+            log.error("Pull Message Service Run Method exception", e);
+        }
+    }
+
+    log.info(this.getServiceName() + " service end");
+}
+```
+
+## DefaultLitePullConsumer # poll() // 拉取消息的方法
+```java
+// private final BlockingQueue<ConsumeRequest> consumeRequestCache = new LinkedBlockingQueue<ConsumeRequest>();
+ConsumeRequest consumeRequest = consumeRequestCache.poll(endTime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+if (endTime - System.currentTimeMillis() > 0) {
+    while (consumeRequest != null && consumeRequest.getProcessQueue().isDropped()) {
+        consumeRequest = consumeRequestCache.poll(endTime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        if (endTime - System.currentTimeMillis() <= 0)
+            break;
+    }
+}
+
+if (consumeRequest != null && !consumeRequest.getProcessQueue().isDropped()) {
+    List<MessageExt> messages = consumeRequest.getMessageExts();
+    long offset = consumeRequest.getProcessQueue().removeMessage(messages);
+
+    // private final ConcurrentHashMap<MessageQueue, MessageQueueState> assignedMessageQueueState;
+    assignedMessageQueue.updateConsumeOffset(consumeRequest.getMessageQueue(), offset);
+
+    //If namespace not null , reset Topic without namespace.
+    this.resetTopic(messages);
+    return messages;
+}
+```
+
+## DefaultLitePullConsumer # commitSync() // 同步消息进度
+```java
+public synchronized void commitSync() {
+    try {
+        for (MessageQueue messageQueue : assignedMessageQueue.messageQueues()) {
+            long consumerOffset = assignedMessageQueue.getConusmerOffset(messageQueue);
+            if (consumerOffset != -1) {
+                ProcessQueue processQueue = assignedMessageQueue.getProcessQueue(messageQueue);
+                long preConsumerOffset = this.getOffsetStore().readOffset(messageQueue, ReadOffsetType.READ_FROM_MEMORY);
+                if (processQueue != null && !processQueue.isDropped() && consumerOffset != preConsumerOffset) {
+                    updateConsumeOffset(messageQueue, consumerOffset);
+                    updateConsumeOffsetToBroker(messageQueue, consumerOffset, false);
+                }
+            }
+        }
+        if (defaultLitePullConsumer.getMessageModel() == MessageModel.BROADCASTING) {
+            offsetStore.persistAll(assignedMessageQueue.messageQueues());
+        }
+    } catch (Exception e) {
+        log.error("An error occurred when update consume offset synchronously.", e);
+    }
+}
+```
 
 ## RokcetMQ 集群消费 & 广播消费
 与集群消费不同的是，广播消息 consumer 的消费进度是存储在各个 consumer 实例上

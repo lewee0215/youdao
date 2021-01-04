@@ -27,3 +27,9 @@ topicRouteData = this.mQClientAPIImpl.getDefaultTopicRouteInfoFromNameServer(def
         }
     }
 ```
+
+> message queue 是无限长的数组，一条消息进来下标就会涨1，下标就是 offset，消息在某个 MessageQueue 里的位置，通过 offset 的值可以定位到这条消息，或者指示 Consumer 从这条消息开始向后处理。  
+
+> message queue 中的 maxOffset 表示消息的最大 offset，maxOffset 并不是最新的那条消息的 offset，而是最新消息的 offset+1，minOffset 则是现存在的最小 offset。
+
+> fileReserveTime=48 默认消息存储48小时后，消费会被物理地从磁盘删除，message queue 的minOffset 也就对应增长。所以比 minOffset 还要小的那些消息已经不在 broker上了，就无法被消费

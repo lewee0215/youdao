@@ -54,8 +54,10 @@ public class NacosDiscoveryBeanDefinitionRegistrar implements ImportBeanDefiniti
         // Register Global Nacos Properties Bean
         registerGlobalNacosProperties(attributes, registry, environment, DISCOVERY_GLOBAL_NACOS_PROPERTIES_BEAN_NAME);
         // Register Nacos Common Beans
+        // CacheableEventPublishingNacosServiceFactory.class
+        // AnnotationNacosInjectedBeanPostProcessor.class
         registerNacosCommonBeans(registry);
-        // Register Nacos Discovery Beans
+        // Register Nacos Discovery Beans (NamingServiceBeanBuilder.class)
         registerNacosDiscoveryBeans(registry);
     }
 

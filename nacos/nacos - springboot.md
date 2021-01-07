@@ -1,6 +1,4 @@
-# 服务注册
-在Spring云应用程序的启动阶段，将监视WebServerInitializedEvent事件。在初始化Web容器后收到WebServerInitializedEvent事件时，将触发注册操作，并调用ServiceRegistry注册方法以将服务注册到Nacos Server
-## nacos-discovery-spring-boot-starter pom.xml依赖
+## nacos-discovery-spring-boot-starter  pom.xml依赖
 ```java
 <!-- Nacos -->
 <dependency>
@@ -23,7 +21,7 @@ com.alibaba.boot.nacos.discovery.autoconfigure.NacosDiscoveryAutoConfiguration
 </dependency>
 ```
 
-Nacos SpringBoot 启动源代码
+## Nacos SpringBoot 启动源代码
 ```java
 // NacosDiscoveryAutoConfiguration
 @ConditionalOnProperty(name = NacosDiscoveryConstants.ENABLED, matchIfMissing = true)
@@ -68,13 +66,3 @@ public class NacosDiscoveryBeanDefinitionRegistrar implements ImportBeanDefiniti
 }
 
 ```
-## nacos - springcloud
-
-# 服务发现
-NacosServerList实现com.netflix.loadbalancer.ServerList接口并在@ConditionOnMissingBean下自动注入它
-> Nacos Discovery Starter默认集成了Ribbon，因此对于使用Ribbon进行负载平衡的组件，可以直接使用Nacos服务发现
-
-## nacos - springboot
-
-
-## nacos - springcloud

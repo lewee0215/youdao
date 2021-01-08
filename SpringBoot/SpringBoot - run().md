@@ -522,9 +522,10 @@ protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactor
 // Invoke factory processors registered as beans in the context.<br/>
 找出beanFactory中所有的实现了BeanDefinitionRegistryPostProcessor接口和BeanFactoryPostProcessor接口的bean  
 将程序中的所有bean放入到beanDefinitionMap中  
-\## 注意这一步并没有实例化bean，而是获得bean的beanDefinition
+// 注意这一步并没有实例化bean，而是获得bean的beanDefinition
 
 <font color='red'>## ConfigurationClassPostProcessor</font>
+
 ```java
 /**
     * Apply processing and build a complete {@link ConfigurationClass} by reading the
@@ -642,8 +643,48 @@ createWebServer(); // 创建Web容器
 
 ### (11) finishBeanFactoryInitialization(beanFactory);  
 // Instantiate all remaining (non-lazy-init) singletons.  <br/>
+
 将beanDefinitionMap中的非懒加载的bean都实例化  
 // spring bean 的实例化过程 https://www.cnblogs.com/kevin-yuan/p/12157017.html
+```java 
+/**
+* Finish the initialization of this context's bean factory,
+* initializing all remaining singleton beans.
+*/
+protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
+    // Initialize conversion service for this context.
+    if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
+            beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
+        beanFactory.setConversionService(
+                beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
+    }
+
+    // Register a default embedded value resolver if no bean post-processor
+    // (such as a PropertyPlaceholderConfigurer bean) registered any before:
+    // at this point, primarily for resolution in annotation attribute values.
+    if (!beanFactory.hasEmbeddedValueResolver()) {
+        beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
+    }
+
+    // Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+    String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
+    for (String weaverAwareName : weaverAwareNames) {
+        getBean(weaverAwareName);
+    }
+
+    // Stop using the temporary ClassLoader for type matching.
+    beanFactory.setTempClassLoader(null);
+
+    // Allow for caching all bean definition metadata, not expecting further changes.
+    beanFactory.freezeConfiguration();
+
+    // Instantiate all remaining (non-lazy-init) singletons.
+    beanFactory.preInstantiateSingletons();
+}
+
+// beanFactory.preInstantiateSingletons()
+// 当Spring将所有单例 bean 都实例初始化完成以后，如果存在实现SmartInitializingSingleton接口的bean，那么Spring还会调用到该bean的afterSingletonsInstantiated()方法
+```
 
 ### (12) finishRefresh();
 // Last step: publish corresponding event.<br/>

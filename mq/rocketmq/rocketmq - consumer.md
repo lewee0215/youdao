@@ -77,6 +77,10 @@ this.offsetStore.load();
 # DefaultLitePullConsumer.start()
 消息拉取核心类： PullMessageService
 消息分发策略：new AllocateMessageQueueAveragely();
+
+https://blog.csdn.net/qq_21383435/article/details/101113808
+pull方式里，取消息的过程需要用户自己写，首先通过打算消费的Topic拿到MessageQueue的集合，遍历MessageQueue集合，然后针对每个MessageQueue批量取消息，一次取完后，记录该队列下一次要取的开始offset，直到取完了，再换另一个MessageQueue
+
 ```java
 // PullMessageService.run()
 public void run() {

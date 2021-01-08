@@ -10,6 +10,20 @@ RocketMQ 的消息过滤方式有别于其他消息中间件，是在订阅时�
 Consumer端会将这个订阅请求构建成一个 SubscriptionData，发送一个Pull消息的请求给Broker端。  
 Broker端从RocketMQ的文件存储层—Store读取数据之前，会用这些数据先构建一个MessageFilter，然后传给Store。    
 Store从 ConsumeQueue读取到一条记录后，会用它记录的消息tag hash值去做过滤，由于在服务端只是根据hashcode进行判断，无法精确对tag原始字符串进行过滤，故在消息消费端拉取到消息后，还需要对消息的原始tag字符串进行比对，如果不同，则丢弃该消息，不进行消息消费  
+```java
+// tagset.contains
+List<MessageExt> msgListFilterAgain = msgList;
+if (!subscriptionData.getTagsSet().isEmpty() && !subscriptionData.isClassFilterMode()) {
+    msgListFilterAgain = new ArrayList<MessageExt>(msgList.size());
+    for (MessageExt msg : msgList) {
+        if (msg.getTags() != null) {
+            if (subscriptionData.getTagsSet().contains(msg.getTags())) {
+                msgListFilterAgain.add(msg);
+            }
+        }
+    }
+}
+```
 
 ### ExpressionMessageFilte#isMatchedByConsumeQueue
 ```java

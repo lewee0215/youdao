@@ -61,6 +61,20 @@ org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter
 http://blog.csdn.net/doegoo/article/details/52471310
 https://www.processon.com/special/template/5d9f1a26e4b06b7d6ec5cfd4
 
+## @SpringBootApplication 启动注解
+``` java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@SpringBootConfiguration // 标识作用： 同 @Configuration
+@EnableAutoConfiguration // @AutoConfigurationPackage @Import(AutoConfigurationImportSelector.class)
+@ComponentScan(excludeFilters = {
+		@Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
+public @interface SpringBootApplication{}
+```
+
 ## 1.初始化SpringApplication
 ```java
 SpringApplication.run(DealSupportApplication.class, args);

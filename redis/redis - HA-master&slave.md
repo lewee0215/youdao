@@ -1,6 +1,7 @@
 # Redis - 主从架构 Master&Slave
 当用Redis做Master-slave的高可用方案时，假如master宕机了，Redis本身(包括它的很多客户端)都没有实现自动进行主备切换  
 \## 不仅主服务器可以有从服务器， 从服务器也可以有自己的从服务器， 多个从服务器之间可以构成一个图状结构
+\## Slave节点只提供读服务，不能进行写入操作
 
 ## 主从同步流程
 https://blog.csdn.net/u010648555/article/details/79427606
@@ -10,12 +11,16 @@ https://blog.csdn.net/u010648555/article/details/79427606
 4. 增量复制：当Salve完成数据快照的恢复后,Master继续将新的所有收集到的修改命令依次传给slave,完成同步。
 5. 但是只要是重新连接master,一次完全同步（全量复制)将被自动执行
 
-slaveof 命令执行流程
+slaveof 从服务器命令执行流程
 ![alt text](https://img-blog.csdn.net/20170910152114918?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvc2sxOTkwNDg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast "title")
 
+slaveof 命令完成流程： 
+![alt text](https://s3.51cto.com/wyfs02/M01/28/5E/wKiom1N3nPbS-5JMAAHj5MGbf50000.jpg  "title")
+
 ### PSync
-https://my.oschina.net/andylucc/blog/686892  
+https://blog.51cto.com/sofar/1413024
 Redis在2.8版本提供了PSYNC命令来带代替SYNC命令，为Redis主从复制提供了部分复制的能力
+
 ```java
 PSYNC <runid> <offset>
 runid:主服务器ID
@@ -24,6 +29,12 @@ offset:从服务器最后接收命令的偏移量
 // 每个Redis服务器都会有一个表明自己身份的ID。在PSYNC中发送的这个ID是指之前连接的Master的ID，如果没保存这个ID，PSYNC的命令会使用”PSYNC ? -1” 这种形式发送给Master，表示需要全量复制
 
 // 如果runid和本机id不一致或者双方offset差距超过了复制积压缓冲区大小，那么就会返回 FULLRESYNC runid offset，Slave将runid保存起来，并进行完整同步
+
+## PSYNC 返回值
+// https://my.oschina.net/andylucc/blog/686892  
++FULLRESYNC：需要全量复制
++CONTINUE：可以进行增量同步
+-ERR：目前master还不支持PSYNC
 ```
 
 当Master进行命令传播时，不仅将命令发送给所有Slave，还会将命令写入到复制积压缓冲区(repl_backlog)里面

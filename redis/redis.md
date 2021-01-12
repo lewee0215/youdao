@@ -31,3 +31,13 @@ pv，uv统计
 HyperLogLog
 
 布隆过滤器
+
+# Redis 一致性策略
+http://doc.redisfans.com/topic/cluster-tutorial.html#redis-guarantee  
+Redis 集群不保证数据的强一致性（strong consistency）： 在特定条件下， Redis 集群可能会丢失已经被执行过的写命令。
+
+使用异步复制（asynchronous replication）是 Redis 集群可能会丢失写命令的其中一个原因。 考虑以下这个写命令的例子：
+
+客户端向主节点 B 发送一条写命令。
+主节点 B 执行写命令，并向客户端返回命令回复。
+主节点 B 将刚刚执行的写命令复制给它的从节点 B1 、 B2 和 B3 

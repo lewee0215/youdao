@@ -66,9 +66,11 @@ jdk1.9 默认垃圾收集器G1
 | :-                            | :-:           |
 | -XX:+UseSerialGC              | Serial + Serial Old            |
 | -XX:+UseParNewGC              | ParNew + Serial Old       |
-| -XX:+UseConcMarkSweepGC       | ParNew + CMS       |
-| -XX:+UseParallelGC            | Parallel Scavenge + Parallel Old        |
-| -XX:+UseParallelOldGC         | Parallel Scavenge + Parallel Old        |
+| -XX:+UseConcMarkSweepGC       | ParNew + CMS + Serial Old   |
+| -XX:+UseParallelGC            | Parallel Scavenge + Serial Old  |
+| -XX:+UseParallelOldGC         | Parallel Scavenge + Parallel Old |
+
+\## UseConcMarkSweepGC 模式下, Serial Old 
 <br/>
 
 ## Serial收集器 - 复制算法（新生代）

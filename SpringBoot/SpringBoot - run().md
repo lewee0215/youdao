@@ -75,7 +75,7 @@ https://www.processon.com/special/template/5d9f1a26e4b06b7d6ec5cfd4
 public @interface SpringBootApplication{}
 ```
 
-## 1.初始化SpringApplication
+# 1.初始化SpringApplication
 ```java
 SpringApplication.run(DealSupportApplication.class, args);
 
@@ -108,7 +108,7 @@ public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySourc
 2. createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
 // 从指定位置 META-INF/spring.factories 加载 FactoryNames
 
-## 2.执行run()方法
+# 2.执行run()方法
 ```java
 /**
     * Run the Spring application, creating and refreshing a new
@@ -162,13 +162,13 @@ public ConfigurableApplicationContext run(String... args) {
     return context;
 }
 ```
-> 1.SpringApplicationRunListeners listeners = getRunListeners(args);  
+## 1.SpringApplicationRunListeners listeners = getRunListeners(args);  
 listeners.starting(); //触发 ApplicationStartingEvent 事件
 
 // SpringApplicationRunListener接口规定了Boot的生命周期，在各个生命周期广播相应的事件，调用实际的ApplicationListener
 
 
-> 2.ConfigurableEnvironment environment = prepareEnvironment(listeners,applicationArguments)
+## 2.ConfigurableEnvironment environment = prepareEnvironment(listeners,applicationArguments)
 * 2.a> getOrCreateEnvironment();  
 
   //创建标准环境
@@ -215,7 +215,7 @@ public class ConfigFileApplicationListener
 }
 ```
 
-> 3.createApplicationContext();
+## 3.createApplicationContext();
 
 // 实例化 AnnotationConfigServletWebServerApplicationContext || AnnotationConfigApplicationContext  
 ```java
@@ -325,7 +325,7 @@ public interface BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProc
 
 ```
  
-> 4.prepareContext(context, environment, listeners, applicationArguments,printedBanner)
+## 4.prepareContext(context, environment, listeners, applicationArguments,printedBanner)
 
 * 4.a> context.setEnvironment(environment);
 
@@ -347,8 +347,7 @@ public interface BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProc
  
 * 4.f> listeners.contextLoaded(context); // 触发 ApplicationPreparedEvent 事件
 
-> 5.1 refreshContext(context);
-
+## 5.1 refreshContext(context);
 https://www.jianshu.com/p/a0a5088a651d?utm_campaign=hugo
 ```java
 @Override
@@ -708,20 +707,33 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 // Reset common introspection caches in Spring's core, since we might not ever need metadata for singleton beans anymore... <br/>
 
 
-> 5.2 registerShutdownHook()
+## 5.2 registerShutdownHook()
 
-> 6.afterRefresh(context, applicationArguments); 
-
+##  6.afterRefresh(context, applicationArguments); 
 // 空方法
 
-> 7.listeners.started(context);   
-
+## 7.listeners.started(context);   
 // 触发 ApplicationStartedEvent 事件
 
-> 8.callRunners(context, applicationArguments);
-
+## 8.callRunners(context, applicationArguments);
 // 执行 ApplicationRunner & CommandLineRunner
+```java
+// CommandLineRunner接口可以用来接收字符串数组的命令行参数，ApplicationRunner 是使用ApplicationArguments 用来接收参数的
+private void callRunners(ApplicationContext context, ApplicationArguments args) {
+    List<Object> runners = new ArrayList<>();
+    runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
+    runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
+    AnnotationAwareOrderComparator.sort(runners);
+    for (Object runner : new LinkedHashSet<>(runners)) {
+        if (runner instanceof ApplicationRunner) {
+            callRunner((ApplicationRunner) runner, args);
+        }
+        if (runner instanceof CommandLineRunner) {
+            callRunner((CommandLineRunner) runner, args);
+        }
+    }
+}
+```
 
-> 9.listeners.running(context);   
-
+##  9.listeners.running(context);   
 // 触发 ApplicationReadyEvent 事件

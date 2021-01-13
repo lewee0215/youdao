@@ -9,14 +9,14 @@ Skywalking已经支持从6个可视化维度剖析分布式系统的运行情况
 6. 告警视图(alarm)根据配置阈值针对应用、服务器、服务进行实时告警
 
 ## 仪表盘：查看全局服务基本性能指标
+https://www.cnblogs.com/duanxz/p/11907664.html
 仪表盘主要包含Service Dashboard和Database Dashboard
 * Service Dashboard：有Global、Service、Endpoint、Instance面板，展示了全局以及服务、端点、实例的详细信息
 * Database Dashboard：展示数据库的响应时间、响应时间分布、吞吐量、SLA、慢SQL等详细信息，便于直观展示数据库状态
 
 ## 拓扑图：展示分布式服务之间调用关系
 
-
-## 链路追踪：可以根据需求，查看链路调用过程
+## 链路追踪：查看链路调用过程
 
 ## 告警提示
 https://blog.csdn.net/wsyyyyy/article/details/101690014  

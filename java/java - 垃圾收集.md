@@ -70,7 +70,9 @@ jdk1.9 默认垃圾收集器G1
 | -XX:+UseParallelGC            | Parallel Scavenge + Serial Old  |
 | -XX:+UseParallelOldGC         | Parallel Scavenge + Parallel Old |
 
-\## UseConcMarkSweepGC 模式下, Serial Old 
+\## UseConcMarkSweepGC 模式下, Serial Old 作为 CMS 收集器 Concurrent Mode Failure 异常的备选方案
+
+> Concurrent Mode Failure：由于CMS在执行过程中是与应用程序并发执行的，如果在此过程中，应用程序需要在老年代分配空间来存放对象，而老年代此时没有足够的空闲空间，此时会触发Concurrent Mode Failure，之后会进行一次Full GC，老年代降级为使用Serial Old垃圾回收器，此时会暂停所有的应用线程的执行
 <br/>
 
 ## Serial收集器 - 复制算法（新生代）

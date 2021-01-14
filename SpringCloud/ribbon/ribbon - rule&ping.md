@@ -27,6 +27,4 @@ https://www.cnblogs.com/fx-blog/p/11713872.html
 | WeightedResponseTimeRule     | 根据相应时间加权，相应时间越长，权重越小，被选中的可能性越低  |
 | ZoneAvoidanceRule            | （默认是这个）负责判断Server所Zone的性能和Server的可用性选择Server，在没有Zone的环境下，类似于轮询（RoundRobinRule） |
 
-# Ribbon 支持 Nacos 权重
-在Nacos的控制台，可以为每一个实例配置权重，取值在0～1之间，值越大，表示这个被调用的几率越大
 

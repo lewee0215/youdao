@@ -56,7 +56,8 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 }
 ```
 
-// 创建对象的方法
+## 创建对象的方法
+https://blog.csdn.net/sinat_41832255/article/details/100630798  
 // AbstractAutowireCapableBeanFactory#doCreateBean
 ```java
 protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args) throws BeanCreationException {

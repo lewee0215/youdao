@@ -656,6 +656,7 @@ createWebServer(); // 创建Web容器
 
 ### (11) finishBeanFactoryInitialization(beanFactory);  
 // Instantiate all remaining (non-lazy-init) singletons.  <br/>
+初始化工厂类 FactoryBean & 单例类 SingletonBean
 
 将beanDefinitionMap中的非懒加载的bean都实例化  
 // spring bean 的实例化过程 https://www.cnblogs.com/kevin-yuan/p/12157017.html

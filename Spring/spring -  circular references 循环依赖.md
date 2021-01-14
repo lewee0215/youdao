@@ -55,3 +55,21 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
     return (singletonObject != NULL_OBJECT ? singletonObject : null);
 }
 ```
+
+// 创建对象的方法
+// AbstractAutowireCapableBeanFactory#doCreateBean
+```java
+protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args) throws BeanCreationException {
+
+    ···
+    // Eagerly cache singletons to be able to resolve circular references
+    // even when triggered by lifecycle interfaces like BeanFactoryAware.
+    boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences && isSingletonCurrentlyInCreation(beanName));
+    if (earlySingletonExposure) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Eagerly caching bean '" + beanName +"' to allow for resolving potential circular references");
+        }
+        addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean);
+    }   
+}
+```

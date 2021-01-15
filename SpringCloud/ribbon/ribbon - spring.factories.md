@@ -17,7 +17,7 @@ org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration
 @EnableConfigurationProperties({RibbonEagerLoadProperties.class, ServerIntrospectorProperties.class})
 public class RibbonAutoConfiguration {
 
-	// 为每个@RibbonClient创建一个子容器，并通过serviceId获取子容器中的IClient、ILoadBalancer、IClientConfig、RibbonLoadBalancerContext、AnnotationConfigApplicationContext
+	// 为每个@RibbonClient创建一个子容器，并通过serviceId获取子容器中的IClient、ILoadBalancer、IClientConfig、RibbonLoadBalancerContext、AnnotationConfigApplicationContext 信息
 	// A factory that creates client, load balancer and client configuration instances
 	// It creates a Spring ApplicationContext per client name, and extracts the beans that it needs from there
 	@Bean
@@ -41,6 +41,14 @@ public class RibbonAutoConfiguration {
 		return new RibbonLoadBalancedRetryFactory(clientFactory);
 	}
 
+	// Ribbon Clients 饥饿加载模式
+	// Ribbon Client 并不是在服务启动的时候就初始化好的，而是在调用的时候才会去创建相应的Client
+	@Bean
+	@ConditionalOnProperty(value = "ribbon.eager-load.enabled")
+	public RibbonApplicationContextInitializer ribbonApplicationContextInitializer() {
+		return new RibbonApplicationContextInitializer(springClientFactory(),
+				ribbonEagerLoadProperties.getClients());
+	}
 
 	@Configuration
 	@ConditionalOnClass(HttpRequest.class)

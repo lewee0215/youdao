@@ -40,13 +40,3 @@ Nacos Server 可以运行在多种模式下，当前支持三种模式：AP、CP
 
 * CP模式
 如果需要在服务级别编辑或者存储配置信息，那么CP是必须，K8s服务和DNS服务则使用于CP模式。CP模式下支持注册服务化实例，此时则是以Raft协议为集群运行模式，该模式下注册实例之前必须先注册服务，如果服务不存在，则会返回错误
-
-```python
-# Nacos Server 运行模式切换
-curl -X PUT '$NACOS_SERVER:8848/nacos/v1/ns/operator/switches?entry=serverMode&value=CP'
-
-# 微服务的bootstrap.properties需要配置如下选择指明注册为临时/永久实例（AP模式不支持数据一致性，所以只支持服务注册的临时实例，CP模式支持服务注册的永久实例）
-
-#false为永久实例，true表示临时实例开启，注册为临时实例
-spring.cloud.nacos.discovery.ephemeral=false
-```

@@ -17,6 +17,7 @@ org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration
 @EnableConfigurationProperties({RibbonEagerLoadProperties.class, ServerIntrospectorProperties.class})
 public class RibbonAutoConfiguration {
 
+	// 为每个@RibbonClient创建一个子容器，并通过serviceId获取子容器中的IClient、ILoadBalancer、IClientConfig、RibbonLoadBalancerContext、AnnotationConfigApplicationContext
 	// A factory that creates client, load balancer and client configuration instances
 	// It creates a Spring ApplicationContext per client name, and extracts the beans that it needs from there
 	@Bean

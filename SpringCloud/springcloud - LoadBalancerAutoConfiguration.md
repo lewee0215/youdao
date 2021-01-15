@@ -2,12 +2,12 @@
 
 ```java
 @Configuration
-@ConditionalOnClass(RestTemplate.class)
-@ConditionalOnBean(LoadBalancerClient.class)
+@ConditionalOnClass(RestTemplate.class)     // RestTemplate类必须存在于当前工程的环境中
+@ConditionalOnBean(LoadBalancerClient.class)// 在Spring的Bean工程中必须有LoadBalancerClient的实现Bean
 @EnableConfigurationProperties(LoadBalancerRetryProperties.class)
 public class LoadBalancerAutoConfiguration {
 
-	@LoadBalanced
+	@LoadBalanced // 标识注解,获取所有的RestTemplate
 	@Autowired(required = false)
 	private List<RestTemplate> restTemplates = Collections.emptyList();
 
@@ -33,14 +33,18 @@ public class LoadBalancerAutoConfiguration {
 		return new LoadBalancerRequestFactory(loadBalancerClient, transformers);
 	}
 
-    // 
+    // 用于实现客户端发起请求时的拦截，以实现客户端负载均衡
 	@Configuration
 	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
 	static class LoadBalancerInterceptorConfig {
+
 		@Bean
 		public LoadBalancerInterceptor ribbonInterceptor(
 				LoadBalancerClient loadBalancerClient,
 				LoadBalancerRequestFactory requestFactory) {
+			// 拦截器实现逻辑
+			// String serviceName = originalUri.getHost();
+			// this.loadBalancerClient.execute(serviceName, requestFactory.createRequest(request, body, execution));
 			return new LoadBalancerInterceptor(loadBalancerClient, requestFactory);
 		}
 

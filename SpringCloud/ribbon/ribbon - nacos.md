@@ -1,4 +1,14 @@
 # RibbonNacosAutoConfiguration
+https://zhuanlan.zhihu.com/p/28547575  
+
+```xml
+<!-- https://mvnrepository.com/artifact/com.netflix.ribbon/ribbon-eureka -->
+<dependency>
+    <groupId>com.netflix.ribbon</groupId>
+    <artifactId>ribbon-eureka</artifactId>
+    <version>2.7.0</version>
+</dependency>
+```
 
 ## maven pom 依赖
 ```xml

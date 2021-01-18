@@ -11,7 +11,7 @@ https://blog.csdn.net/alex_xfboy/article/details/88166216
 | ServerList           | ConfigurationBasedServerList  | 定义了获取服务器的列表接口，存储服务列表       |
 | ServerListFilter     | ZonePreferenceServerListFilter| 接口使用不同的方法来做动态更新服务器列表        |
 | ServerListUpdater    | PollingServerListUpdater      | 使用不同的方法来做动态更新服务器列表       |
-| IClientConfig        | DefaultClientConfigImpl       | 定义了各种api所使用的客户端配置，用来初始化ribbon客户端和负载均衡器，默认实现是DefaultClientConfigImpl        |
+| IClientConfig        | DefaultClientConfigImpl       | 用于对客户端或者负载均衡的配置，用来初始化ribbon客户端|
 | ILoadBalancer        | ZoneAwareLoadBalancer         | 定义了各种软负载，动态更新一组服务列表及根据指定算法从现有服务器列表中选择一个服务       |
 
 # Ribbon - IRule 负载规则
@@ -45,7 +45,7 @@ https://blog.csdn.net/weixin_34148340/article/details/93079295
 # Ribbon - ServerList 存储服务实例
 https://blog.csdn.net/alex_xfboy/article/details/88166216  
 服务列表分为静态和动态。如果是动态的，后台有个线程会定时刷新和过滤服务列表
-默认实现包含 ConfigurationBasedServerList, NacosServerList 等
+默认实现包含 ConfigurationBasedServerList, NacosServerList ,DiscoveryEnabledNIWSServerList等
 
 ```java
 com.netflix.loadbalancer.ConfigurationBasedServerList 

@@ -1,7 +1,7 @@
 ## Ribbon 使用简介
 Ribbon 负载均衡默认使用的策略是 ZoneAvoidanceRule
 
-## Ribbon 主要组件及默认值
+## Ribbon 主要组件及默认值 (RibbonClientConfiguration)
 https://blog.csdn.net/alex_xfboy/article/details/88166216  
 
 | 组件名称              | 默认值                        | 使用说明 |

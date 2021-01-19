@@ -2,17 +2,16 @@
 https://zhuanlan.zhihu.com/p/28547575  
 
 ```xml
-<!-- https://mvnrepository.com/artifact/com.netflix.ribbon/ribbon-eureka -->
-<dependency>
-    <groupId>com.netflix.ribbon</groupId>
-    <artifactId>ribbon-eureka</artifactId>
-    <version>2.7.0</version>
-</dependency>
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-alibaba-nacos-discovery</artifactId>
+    </dependency>
+</dependencies>
 ```
 
-## maven pom 依赖
+## 依赖Jar: spring-cloud-alibaba-nacos-discovery-0.0.2.RELEASE.jar
 ```xml
-// 依赖Jar: spring-cloud-alibaba-nacos-discovery-0.0.2.RELEASE.jar
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.springframework.cloud.alibaba.nacos.NacosDiscoveryAutoConfiguration,\
   org.springframework.cloud.alibaba.nacos.ribbon.RibbonNacosAutoConfiguration,\

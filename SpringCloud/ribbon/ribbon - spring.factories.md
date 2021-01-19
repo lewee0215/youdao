@@ -23,6 +23,7 @@ public class RibbonAutoConfiguration {
 	@Bean
 	public SpringClientFactory springClientFactory() {
 		SpringClientFactory factory = new SpringClientFactory();
+		// List<RibbonClientSpecification> configurations
 		factory.setConfigurations(this.configurations);
 		return factory;
 	}
@@ -94,8 +95,11 @@ public class RibbonAutoConfiguration {
 
 ### LoadBalancerClient 接口详情
 ```java
+public class RibbonLoadBalancerClient implements LoadBalancerClient
+
 public interface ServiceInstanceChooser {
     // 根据传入服务名serviceId,从负载均衡器中挑选一个对应服务的实例
+	// 筛选策略根据 ILoadBalancer 决定, 如 ZoneAwareLoadBalancer
     ServiceInstance choose(String serviceId);
 }
 
@@ -127,14 +131,11 @@ public @interface RibbonClients {
 }
 
 // RibbonClientConfigurationRegistrar#registerBeanDefinitions
-private void registerClientConfiguration(BeanDefinitionRegistry registry,
-		Object name, Object configuration) {
-	BeanDefinitionBuilder builder = BeanDefinitionBuilder
-			.genericBeanDefinition(RibbonClientSpecification.class);
+private void registerClientConfiguration(BeanDefinitionRegistry registry,Object name, Object configuration) {
+	BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(RibbonClientSpecification.class);
 	builder.addConstructorArgValue(name);
 	builder.addConstructorArgValue(configuration);
-	registry.registerBeanDefinition(name + ".RibbonClientSpecification",
-			builder.getBeanDefinition());
+	registry.registerBeanDefinition(name + ".RibbonClientSpecification",builder.getBeanDefinition());
 }
 ```
 

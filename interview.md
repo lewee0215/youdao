@@ -32,6 +32,11 @@ LoadTimeWeaverAware
 
 ## 酷家乐 01.14 15：00
 
+> cap 理论
+> 索引原则 , B+树和B树的区别
+> MVCC
+
+
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID
         threadlocal.put 

@@ -1,40 +1,31 @@
 ## Q&A
 LoadTimeWeaverAware
 
-## 畅移科技 01.12 16：30
-> 主备上线切换实现
-作用: 故障机房切换 , 流量高峰动态上线
+> 畅移科技 01.12 16：30
+1.  主备上线切换实现  
+作用: 故障机房切换 , 流量高峰动态上线  
 实现: --
 
-(F5+Nginx) + SpringCloud-Gateway + SpringBoot
+2. (F5+Nginx) + SpringCloud-Gateway + SpringBoot
+3. JVM监控实现
+4. Skywalking 监控内容
+5. springboot admin
 
-> JVM监控实现
+> 1药网 01.13 10：00
 
-> Skywalking 监控内容
+1. 垃圾收集算法
+2. CMS & G1
+3. Spring 循环依赖
+4. 技术痛点 & 业务痛点
 
-> springboot admin
+> 途虎养车 01.13 14：00
+1. 管理心得
+2. Eureka & Nacos 选型方案
 
-## 1药网 01.13 10：00
-
-> 垃圾收集算法
-
-> CMS & G1
-
-> Spring 循环依赖
-
-> 技术痛点 & 业务痛点
-
-## 途虎养车 01.13 14：00
-
-> 管理心得
-
-> Eureka & Nacos 选型方案
-
-## 酷家乐 01.14 15：00
-
-> cap 理论
-> 索引原则 , B+树和B树的区别
-> MVCC
+> 酷家乐 01.14 15：00
+1. cap 理论
+2. 索引原则 , B+树和B树的区别
+3. MVCC
 
 
 ## Redis 分布式锁可重入性实现

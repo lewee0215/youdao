@@ -68,11 +68,23 @@ https://www.processon.com/special/template/5d9f1a26e4b06b7d6ec5cfd4
 @Documented
 @Inherited
 @SpringBootConfiguration // 标识作用： 同 @Configuration
-@EnableAutoConfiguration // @AutoConfigurationPackage @Import(AutoConfigurationImportSelector.class)
+@EnableAutoConfiguration 
 @ComponentScan(excludeFilters = {
 		@Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
 		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
 public @interface SpringBootApplication{}
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@AutoConfigurationPackage
+@Import(AutoConfigurationImportSelector.class)
+public @interface EnableAutoConfiguration{}
+
+// AutoConfigurationImportSelector 
+// 用于处理所有的 EnableAutoConfiguration.class
+// List<String> configurations = getCandidateConfigurations(annotationMetadata,attributes);
 ```
 
 # 1.初始化SpringApplication
@@ -418,18 +430,18 @@ public void refresh() throws BeansException, IllegalStateException {
 https://www.jianshu.com/p/a0a5088a651d?utm_campaign=hugo
 https://www.cnblogs.com/disandafeier/p/12081301.html
 
-### (01) prepareRefresh();  
+### <font color='yellow'>(01) prepareRefresh();</font>  
 // Prepare this context for refreshing. <br/>
 初始化 context environment 中占位符
 对系统的环境变量或者系统属性进行准备和校验
 
-### (02) ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory(); 
+### <font color='yellow'>(02) ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</font>
 // Tell the subclass to refresh the internal bean factory.<br/>
 //创建并初始化beanFactory
 this.beanFactory = new DefaultListableBeanFactory(); 
 <br/>
  
-### (03) prepareBeanFactory(beanFactory);
+### <font color='yellow'>(03) prepareBeanFactory(beanFactory);</font>
 // Prepare the bean factory for use in this context.<br/>
 ```java
 /**
@@ -502,7 +514,7 @@ beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 * // 注入一些其它信息的bean，比如environment、systemProperties、SystemEnvironment等
 
-### (04) postProcessBeanFactory(beanFactory);
+### <font color='yellow'>(04) postProcessBeanFactory(beanFactory);</font>
 // Allows post-processing of the bean factory in context subclasses.<br/>
 https://fangjian0423.github.io/2017/05/10/springboot-context-refresh/
 ```java
@@ -531,7 +543,7 @@ protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactor
 }
 ```
 
-### (05) invokeBeanFactoryPostProcessors(beanFactory);
+### <font color='yellow'>(05) invokeBeanFactoryPostProcessors(beanFactory);</font>
 // Invoke factory processors registered as beans in the context.<br/>
 找出beanFactory中所有的实现了BeanDefinitionRegistryPostProcessor接口和BeanFactoryPostProcessor接口的bean  
 将程序中的所有bean放入到beanDefinitionMap中  
@@ -630,31 +642,31 @@ protected final SourceClass doProcessConfigurationClass(ConfigurationClass confi
 }
 ```
 
-### (06) registerBeanPostProcessors(beanFactory);
+### <font color='yellow'>(06) registerBeanPostProcessors(beanFactory);</font>
 // Register bean processors that intercept bean creation.<br/>
 
 找到BeanPostProcessor的实现，排序后注册到容器内  
 <br/>
 
-### (07) initMessageSource(); 
+### <font color='yellow'>(07) initMessageSource();</font>
 // Initialize message source for this context.<br/>
 初始化国际化相关属性
 
 
-### (08) initApplicationEventMulticaster();
+### <font color='yellow'>(08) initApplicationEventMulticaster();</font>
 // Initialize event multicaster for this context.<br/>
 初始化事件广播器
 
-### (09) onRefresh();
+### <font color='yellow'>(09) onRefresh();</font>
 // Initialize other special beans in specific context subclasses.<br/>
 createWebServer(); // 创建Web容器
 
 
-### (10) registerListeners();
+### <font color='yellow'>(10) registerListeners();</font>
 // Check for listener beans and register them.<br/>
 
 
-### (11) finishBeanFactoryInitialization(beanFactory);  
+### <font color='yellow'>(11) finishBeanFactoryInitialization(beanFactory);</font>  
 // Instantiate all remaining (non-lazy-init) singletons.  <br/>
 初始化工厂类 FactoryBean & 单例类 SingletonBean
 
@@ -700,11 +712,11 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 // 当Spring将所有单例 bean 都实例初始化完成以后，如果存在实现SmartInitializingSingleton接口的bean，那么Spring还会调用到该bean的afterSingletonsInstantiated()方法
 ```
 
-### (12) finishRefresh();
+### <font color='yellow'>(12) finishRefresh();</font>
 // Last step: publish corresponding event.<br/>
 
 
-### (13) resetCommonCaches();
+### <font color='yellow'>(13) resetCommonCaches();</font>
 // Reset common introspection caches in Spring's core, since we might not ever need metadata for singleton beans anymore... <br/>
 
 

@@ -26,7 +26,8 @@ public class DefaultNIWSServerListFilter<T extends Server> extends ZoneAffinityS
 ## EurekaNotificationServerListUpdater
 public class EurekaNotificationServerListUpdater implements ServerListUpdater
 ``` java
-// 监听Eureka Client 的 CacheRefreshedEvent 事件
+// 监听Eureka Client 的 CacheRefreshedEvent 事件后 通过 ServerList 获取最新实例
+// servers = serverListImpl.getUpdatedListOfServers();
 this.updateListener = new EurekaEventListener() {
     @Override
     public void onEvent(EurekaEvent event) {

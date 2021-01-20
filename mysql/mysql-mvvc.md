@@ -63,6 +63,7 @@ trx_sys中的主要内容，以及判断可见性的方法如下：
 * rw_trx_ids：表示生成ReadView时当前系统中活跃的读写事务的事务id列表。如果数据的事务id在low_limit_id和up_limit_id之间，则需要判断事务id是否在rw_trx_ids中：如果在，说明生成ReadView时事务仍在活跃中，因此数据对ReadView不可见；如果不在，说明生成ReadView时事务已经提交了，因此数据对ReadView可见
 
 ### 读已提交（RC）隔离级别下的非加锁读,RC与RR一样，都使用了MVCC：  
+https://www.cnblogs.com/mengxinJ/p/14053269.html  
 <font color='yellow'>RR是在事务开始后第一次执行select前创建ReadView</font>
 ，直到事务提交都不会再创建。根据前面的介绍，RR可以避免脏读、不可重复读和幻读。
 

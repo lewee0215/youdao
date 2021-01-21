@@ -73,13 +73,14 @@ kxtx-oms.ribbon.EnableZoneAffinity=true
 
 > ZonePreferenceServerListFilter
 
-ZoneAffinityServerListFilter的子类，但是比较的zone是发布环境里面的zone。过滤掉所有和客户端环境里的配置的zone的不同的服务，如果和客户端相同的zone不存在，才不进行过滤
+ZoneAffinityServerListFilter的子类，但是比较的zone是发布环境里面的zone。  
+过滤掉所有和客户端环境里的配置的zone的不同的服务，如果和客户端相同的zone不存在，才不进行过滤
 
 > ServerListSubsetFilter
 
 ZoneAffinityServerListFilter的子类，确保客户端仅看到由ServerList实现返回的整个服务器的固定子集。 它还可以定期用新服务器替代可用性差的子集中的服务器
 
-<pre>
+```properties
 # 选择ServerList获取模式
 kxtx-oms.ribbon.NIWSServerListClassName=com.netflix.niws.loadbalancer.DiscoveryEnabledNIWSServerList 
 
@@ -89,7 +90,7 @@ kxtx-oms.ribbon.NIWSServerListFilterClassName=com.netflix.loadbalancer.ServerLis
 
 # only show client 5 servers. default is 20.
 kxtx-oms.ribbon.ServerListSubsetFilter.size=5
-</pre>
+```
 
 # Ribbon - ServerListUpdater 更新器
 被DynamicServerListLoadBalancer用于动态的更新服务列表。
@@ -104,6 +105,8 @@ kxtx-oms.ribbon.ServerListSubsetFilter.size=5
 
 # Ribbon - ILoadBalancer 负载均衡器
 https://mp.weixin.qq.com/s/ganchvrJRwzE8ph20psXqA  
+
+![alt text](https://img-blog.csdn.net/20170913083353943 "title")
 
 ```java
 public interface ILoadBalancer {
@@ -134,3 +137,32 @@ DynamicServerListLoadBalancer组合Rule、IPing、ServerList、ServerListFilter�
 > ZoneAwareLoadBalancer
 
 DynamicServerListLoadBalancer的子类，主要加入zone的因素。统计每个zone的平均请求的情况，保证从所有zone选取对当前客户端服务最好的服务组列表
+
+```java
+public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLoadBalancer<T> {
+
+    @Override
+    public Server chooseServer(Object key) {
+        ....
+
+        // 获取可用的服务区 Zone
+        Set<String> availableZones = ZoneAvoidanceRule.getAvailableZones(zoneSnapshot, triggeringLoad.get(), triggeringBlackoutPercentage.get());
+        logger.debug("Available zones: {}", availableZones);
+
+        if (availableZones != null &&  availableZones.size() < zoneSnapshot.keySet().size()) {
+
+            // 随机挑选可用的服务区 Zone
+            String zone = ZoneAvoidanceRule.randomChooseZone(zoneSnapshot, availableZones);
+            logger.debug("Zone chosen: {}", zone);
+            if (zone != null) {
+                BaseLoadBalancer zoneLoadBalancer = getLoadBalancer(zone);
+
+                // BaseLoadBalancer.chooseServer(key) 轮询获取可用实例
+                server = zoneLoadBalancer.chooseServer(key);
+            }
+        }
+
+        ...
+    }
+}
+```

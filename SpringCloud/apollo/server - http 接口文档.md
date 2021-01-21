@@ -3,6 +3,7 @@ https://ctripcorp.github.io/apollo/#/zh/usage/other-language-client-user-guide
 
 ## 带缓存的Http接口从Apollo读取配置
 接口会从缓存中获取配置，适合频率较高的配置拉取请求，如简单的每30秒轮询一次配置
+
 ``` java
 // 使用 Guava 对配置信息进行缓存
 private Cache<String, String> localCache;

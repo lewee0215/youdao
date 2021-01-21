@@ -1,5 +1,14 @@
-# Apollo 使用教程
+# Apollo Client 使用教程
 https://ctripcorp.github.io/apollo/#/zh/design/apollo-introduction
+
+## Maven 依赖
+```xml
+<dependency>
+    <groupId>com.ctrip.framework.apollo</groupId>
+    <artifactId>apollo-client</artifactId>
+    <version>1.4.0</version>
+</dependency>
+```
 
 # Apollo - SpringBoot 集成
 ```yml
@@ -13,6 +22,30 @@ apollo:
     enabled: true
     eagerLoad:
       enabled: true
+```
+
+#  客户端获取配置（Java API）
+```java
+Config config = ConfigService.getAppConfig();
+Integer defaultRequestTimeout = 200;
+Integer requestTimeout = config.getIntProperty("requestTimeout", defaultRequestTimeout);
+```
+
+# 客户端监听配置变化（Java API）
+```java
+Config config = ConfigService.getAppConfig();
+config.addChangeListener(new ConfigChangeListener() {
+  @Override
+  public void onChange(ConfigChangeEvent changeEvent) {
+    for (String key : changeEvent.changedKeys()) {
+      ConfigChange change = changeEvent.getChange(key);
+      System.out.println(String.format(
+        "Found change - key: %s, oldValue: %s, newValue: %s, changeType: %s",
+        change.getPropertyName(), change.getOldValue(),
+        change.getNewValue(), change.getChangeType()));
+     }
+  }
+});
 ```
 
 ## 客户端本地开发模式
@@ -45,26 +78,3 @@ namespace就是应用使用的配置namespace，一般是application client-loca
 ## 客户端本地缓存
 Apollo客户端会把从服务端获取到的配置在本地文件系统缓存一份，用于在遇到服务不可用，或网络不通的时候，依然能从本地恢复配置，不影响应用正常运行
 
-#  客户端获取配置（Java API）
-```java
-Config config = ConfigService.getAppConfig();
-Integer defaultRequestTimeout = 200;
-Integer requestTimeout = config.getIntProperty("requestTimeout", defaultRequestTimeout);
-```
-
-# 客户端监听配置变化 （Java API）
-```java
-Config config = ConfigService.getAppConfig();
-config.addChangeListener(new ConfigChangeListener() {
-  @Override
-  public void onChange(ConfigChangeEvent changeEvent) {
-    for (String key : changeEvent.changedKeys()) {
-      ConfigChange change = changeEvent.getChange(key);
-      System.out.println(String.format(
-        "Found change - key: %s, oldValue: %s, newValue: %s, changeType: %s",
-        change.getPropertyName(), change.getOldValue(),
-        change.getNewValue(), change.getChangeType()));
-     }
-  }
-});
-```

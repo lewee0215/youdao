@@ -1,7 +1,7 @@
 # Apollo - Server Http 接口文档
 https://ctripcorp.github.io/apollo/#/zh/usage/other-language-client-user-guide
 
-## 带缓存的Http接口从Apollo读取配置
+## ConfigFileController 带缓存的Http接口从Apollo读取配置
 接口会从缓存中获取配置，适合频率较高的配置拉取请求，如简单的每30秒轮询一次配置
 
 ``` java
@@ -35,6 +35,7 @@ String result = localCache.getIfPresent(cacheKey);
 
 * ip={clientIp} 参数是可选的，用来实现灰度发布
 
+com.ctrip.framework.apollo.configservice.controller.ConfigFileController
 ``` json
 URL: {config_server_url}/configfiles/json/{appId}/{clusterName}/{namespaceName}?ip={clientIp}   
  
@@ -47,13 +48,14 @@ Method: GET
 }
 ```
 
-## 不带缓存的Http接口从Apollo读取配置
+## ConfigController 不带缓存的Http接口从Apollo读取配置
 接口会直接从数据库中获取配置，可以配合配置推送通知实现实时更新配置
 
 * releaseKey={releaseKey} : 将上一次返回对象中的releaseKey传入即可，用来给服务端比较版本，如果版本比下来没有变化，则服务端直接返回304以节省流量和运算
 
 * ip={clientIp} 参数是可选的，用来实现灰度发布
 
+com.ctrip.framework.apollo.configservice.controller.ConfigController
 ``` json
 URL: {config_server_url}/configs/{appId}/{clusterName}/{namespaceName}?releaseKey={releaseKey}&ip={clientIp}  
 
@@ -73,6 +75,8 @@ Method: GET
 ```
 ## NotificationControllerV2 应用感知配置更新
 Apollo提供了基于Http long polling的配置更新推送通知，第三方客户端可以看自己实际的需求决定是否需要使用这个功能
+
+com.ctrip.framework.apollo.configservice.controller.NotificationControllerV2
 ``` json
 URL: {config_server_url}/notifications/v2?appId={appId}&cluster={clusterName}&notifications={notifications}  
 

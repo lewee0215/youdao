@@ -27,7 +27,7 @@ env=Local
 </code>
 
 2. 本地配置文件目录
-<code>
+<code>  
 Mac/Linux: /opt/data/{appId}/config-cache  
 Windows: C:\opt\data\{appId}\config-cache  
 </code>

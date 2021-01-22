@@ -11,6 +11,8 @@ LoadTimeWeaverAware
 4. Skywalking 监控内容
 5. springboot admin
 
+6. 服务器自动扩容
+
 > 1药网 01.13 10：00
 
 1. 垃圾收集算法

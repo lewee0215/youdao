@@ -47,12 +47,32 @@ public class ApolloConfigRegistrar implements ImportBeanDefinitionRegistrar {
     propertySourcesPlaceholderPropertyValues.put("order", 0);
 
     // BeanRegistrationUtil.registerBeanDefinitionIfNotExists 注册指定Bean
-    PropertySourcesPlaceholderConfigurer 
-    PropertySourcesProcessor
-    ApolloAnnotationProcessor
-    SpringValueProcessor
-    SpringValueDefinitionProcessor
-    ApolloJsonValueProcessor
+    PropertySourcesPlaceholderConfigurer  //->BeanFactoryPostProcessor
+    PropertySourcesProcessor              //->BeanFactoryPostProcessor
+    ApolloAnnotationProcessor             //->BeanPostProcessor
+    SpringValueProcessor                  //->BeanFactoryPostProcessor和BeanPostProcessor
+    SpringValueDefinitionProcessor        //->BeanDefinitionRegistryPostProcessor（即BeanFactoryPostProcessor）
+    ApolloJsonValueProcessor              //->BeanPostProcessor
+  }
+}
+```
+
+### PropertySourcesProcessor 作用详解
+https://blog.csdn.net/fedorafrog/article/details/103919805
+
+1. 根据命名空间从配置中心获取配置信息，创建RemoteConfigRepository和LocalFileConfigRepository对象。RemoteConfigRepository表示远程配置中心资源，LocalFileConfigRepository表示本地缓存配置资源。
+LocalFileConfigRepository对象缓存配置信息到C:\opt\data 或者/opt/data目录。
+2. RemoteConfigRepository开启HTTP长轮询请求定时任务，默认2s请求一次。
+3. 將本地缓存配置信息转换为PropertySource对象（Apollo自定义了Spring的PropertySource），加载到Spring的Environment对象中。
+4. 將自定义的ConfigPropertySource注册为观察者。一旦RemoteConfigRepository发现远程配置中心信息发生变化，ConfigPropertySource对象会得到通知
+
+```java
+public class PropertySourcesProcessor implements BeanFactoryPostProcessor, EnvironmentAware, PriorityOrdered {
+
+  @Override
+  public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    initializePropertySources();
+    initializeAutoUpdatePropertiesFeature(beanFactory);
   }
 }
 ```
@@ -95,7 +115,6 @@ public class ConfigPropertySourcesProcessor extends PropertySourcesProcessor
 // springValueDefinitions.put(beanName, new SpringValueDefinition(key, placeholder, propertyValue.getName()));
 private void processSpringValueDefinition(BeanDefinitionRegistry registry) {
   SpringValueDefinitionProcessor springValueDefinitionProcessor = new SpringValueDefinitionProcessor();
-
   springValueDefinitionProcessor.postProcessBeanDefinitionRegistry(registry);
 }
 ```
@@ -104,22 +123,13 @@ private void processSpringValueDefinition(BeanDefinitionRegistry registry) {
 ```java
 public class ApolloApplicationContextInitializer implements
     ApplicationContextInitializer<ConfigurableApplicationContext> , EnvironmentPostProcessor, Ordered {
-    public static final int DEFAULT_ORDER = 0;
-
-    private static final Logger logger = LoggerFactory.getLogger(ApolloApplicationContextInitializer.class);
-    private static final Splitter NAMESPACE_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
-    private static final String[] APOLLO_SYSTEM_PROPERTIES = {"app.id", ConfigConsts.APOLLO_CLUSTER_KEY,
-        "apollo.cacheDir", ConfigConsts.APOLLO_META_KEY};
 
     private final ConfigPropertySourceFactory configPropertySourceFactory = SpringInjector
-        .getInstance(ConfigPropertySourceFactory.class);
-
-    private int order = DEFAULT_ORDER;
+      .getInstance(ConfigPropertySourceFactory.class);
 
     @Override
     public void initialize(ConfigurableApplicationContext context) {
       ConfigurableEnvironment environment = context.getEnvironment();
-
       String enabled = environment.getProperty(PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED, "false");
       if (!Boolean.valueOf(enabled)) {
         logger.debug("Apollo bootstrap config is not enabled for context {}, see property: ${{}}", context, PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED);
@@ -133,11 +143,9 @@ public class ApolloApplicationContextInitializer implements
 
   /**
    * Initialize Apollo Configurations Just after environment is ready.
-   *
    * @param environment
    */
   protected void initialize(ConfigurableEnvironment environment) {
-
     if (environment.getPropertySources().contains(PropertySourcesConstants.APOLLO_BOOTSTRAP_PROPERTY_SOURCE_NAME)) {
       //already initialized
       return;
@@ -150,7 +158,6 @@ public class ApolloApplicationContextInitializer implements
     CompositePropertySource composite = new CompositePropertySource(PropertySourcesConstants.APOLLO_BOOTSTRAP_PROPERTY_SOURCE_NAME);
     for (String namespace : namespaceList) {
       Config config = ConfigService.getConfig(namespace);
-
       composite.addPropertySource(configPropertySourceFactory.getConfigPropertySource(namespace, config));
     }
 
@@ -158,37 +165,12 @@ public class ApolloApplicationContextInitializer implements
   }
 
   /**
-   * To fill system properties from environment config
-   */
-  void initializeSystemProperty(ConfigurableEnvironment environment) {
-    for (String propertyName : APOLLO_SYSTEM_PROPERTIES) {
-      fillSystemPropertyFromEnvironment(environment, propertyName);
-    }
-  }
-
-  private void fillSystemPropertyFromEnvironment(ConfigurableEnvironment environment, String propertyName) {
-    if (System.getProperty(propertyName) != null) {
-      return;
-    }
-
-    String propertyValue = environment.getProperty(propertyName);
-
-    if (Strings.isNullOrEmpty(propertyValue)) {
-      return;
-    }
-
-    System.setProperty(propertyName, propertyValue);
-  }
-
-  /**
-   *
    * In order to load Apollo configurations as early as even before Spring loading logging system phase,
    * this EnvironmentPostProcessor can be called Just After ConfigFileApplicationListener has succeeded.
    *
    * <br />
    * The processing sequence would be like this: <br />
    * Load Bootstrap properties and application properties -----> load Apollo configuration properties ----> Initialize Logging systems
-   *
    * @param configurableEnvironment
    * @param springApplication
    */
@@ -197,20 +179,51 @@ public class ApolloApplicationContextInitializer implements
 
     // should always initialize system properties like app.id in the first place
     initializeSystemProperty(configurableEnvironment);
-
     Boolean eagerLoadEnabled = configurableEnvironment.getProperty(PropertySourcesConstants.APOLLO_BOOTSTRAP_EAGER_LOAD_ENABLED, Boolean.class, false);
 
     //EnvironmentPostProcessor should not be triggered if you don't want Apollo Loading before Logging System Initialization
     if (!eagerLoadEnabled) {
       return;
     }
-
     Boolean bootstrapEnabled = configurableEnvironment.getProperty(PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED, Boolean.class, false);
-
     if (bootstrapEnabled) {
       initialize(configurableEnvironment);
     }
 
+  }
+}
+```
+
+## SpringInjector
+```java
+public class SpringInjector {
+  private static volatile Injector s_injector;
+  private static final Object lock = new Object();
+
+  private static Injector getInjector() {
+    if (s_injector == null) {
+      synchronized (lock) {
+        if (s_injector == null) {
+          try {
+            s_injector = Guice.createInjector(new SpringModule());
+          } catch (Throwable ex) {
+            ApolloConfigException exception = new ApolloConfigException("Unable to initialize Apollo Spring Injector!", ex);
+            Tracer.logError(exception);
+            throw exception;
+          }
+        }
+      }
+    }
+    return s_injector;
+  }
+
+  private static class SpringModule extends AbstractModule {
+    @Override
+    protected void configure() {
+      bind(PlaceholderHelper.class).in(Singleton.class);
+      bind(ConfigPropertySourceFactory.class).in(Singleton.class);
+      bind(SpringValueRegistry.class).in(Singleton.class);
+    }
   }
 }
 ```

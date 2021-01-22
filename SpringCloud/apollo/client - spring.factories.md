@@ -1,6 +1,6 @@
 # Apollo Client 启动流程
-1.RemoteConfigRepository ，定时轮询 Config Service 的配置读取
-2.RemoteConfigLongPollService ，长轮询 Config Service 的配置变更通知 /notifications/v2 接口
+1. RemoteConfigRepository ，定时轮询 Config Service 的配置读取  
+2. RemoteConfigLongPollService ，长轮询 Config Service 的配置变更通知 /notifications/v2 接口  
 
 ## pom.xml
 ```xml
@@ -29,20 +29,9 @@ com.ctrip.framework.apollo.spring.boot.ApolloApplicationContextInitializer
 @Target(ElementType.TYPE)
 @Documented
 @Import(ApolloConfigRegistrar.class)
-public @interface EnableApolloConfig {
-  /**
-   * Apollo namespaces to inject configuration into Spring Property Sources.
-   */
-  String[] value() default {ConfigConsts.NAMESPACE_APPLICATION};
+public @interface EnableApolloConfig {}
 
-  /**
-   * The order of the apollo config, default is {@link Ordered#LOWEST_PRECEDENCE}, which is Integer.MAX_VALUE.
-   * If there are properties with the same name in different apollo configs, the apollo config with smaller order wins.
-   * @return
-   */
-  int order() default Ordered.LOWEST_PRECEDENCE;
-}
-
+// apollo-client-1.4.0.jar
 public class ApolloConfigRegistrar implements ImportBeanDefinitionRegistrar {
   @Override
   public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
@@ -53,23 +42,17 @@ public class ApolloConfigRegistrar implements ImportBeanDefinitionRegistrar {
     PropertySourcesProcessor.addNamespaces(Lists.newArrayList(namespaces), order);
 
     Map<String, Object> propertySourcesPlaceholderPropertyValues = new HashMap<>();
+
     // to make sure the default PropertySourcesPlaceholderConfigurer's priority is higher than PropertyPlaceholderConfigurer
     propertySourcesPlaceholderPropertyValues.put("order", 0);
 
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, PropertySourcesPlaceholderConfigurer.class.getName(),
-        PropertySourcesPlaceholderConfigurer.class, propertySourcesPlaceholderPropertyValues);
-
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, PropertySourcesProcessor.class.getName(),
-        PropertySourcesProcessor.class);
-
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloAnnotationProcessor.class.getName(),
-        ApolloAnnotationProcessor.class);
-
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, SpringValueProcessor.class.getName(), SpringValueProcessor.class);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, SpringValueDefinitionProcessor.class.getName(), SpringValueDefinitionProcessor.class);
-
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloJsonValueProcessor.class.getName(),
-            ApolloJsonValueProcessor.class);
+    // BeanRegistrationUtil.registerBeanDefinitionIfNotExists 注册指定Bean
+    PropertySourcesPlaceholderConfigurer 
+    PropertySourcesProcessor
+    ApolloAnnotationProcessor
+    SpringValueProcessor
+    SpringValueDefinitionProcessor
+    ApolloJsonValueProcessor
   }
 }
 ```
@@ -97,16 +80,23 @@ public class ConfigPropertySourcesProcessor extends PropertySourcesProcessor
     // to make sure the default PropertySourcesPlaceholderConfigurer's priority is higher than PropertyPlaceholderConfigurer
     propertySourcesPlaceholderPropertyValues.put("order", 0);
 
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, PropertySourcesPlaceholderConfigurer.class.getName(),
-        PropertySourcesPlaceholderConfigurer.class, propertySourcesPlaceholderPropertyValues);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloAnnotationProcessor.class.getName(),
-        ApolloAnnotationProcessor.class);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, SpringValueProcessor.class.getName(), SpringValueProcessor.class);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloJsonValueProcessor.class.getName(),
-        ApolloJsonValueProcessor.class);
+    // BeanRegistrationUtil.registerBeanDefinitionIfNotExists 注册指定Bean
+    PropertySourcesPlaceholderConfigurer 
+    ApolloAnnotationProcessor
+    SpringValueProcessor
+    ApolloJsonValueProcessor
 
     processSpringValueDefinition(registry);
   }
+}
+
+// 判断 isAutoUpdateInjectedSpringPropertiesEnabled() 处理配置的自动更新
+// 获取所有的 BeanDefinition 的 placeholder
+// springValueDefinitions.put(beanName, new SpringValueDefinition(key, placeholder, propertyValue.getName()));
+private void processSpringValueDefinition(BeanDefinitionRegistry registry) {
+  SpringValueDefinitionProcessor springValueDefinitionProcessor = new SpringValueDefinitionProcessor();
+
+  springValueDefinitionProcessor.postProcessBeanDefinitionRegistry(registry);
 }
 ```
 
@@ -114,31 +104,31 @@ public class ConfigPropertySourcesProcessor extends PropertySourcesProcessor
 ```java
 public class ApolloApplicationContextInitializer implements
     ApplicationContextInitializer<ConfigurableApplicationContext> , EnvironmentPostProcessor, Ordered {
-  public static final int DEFAULT_ORDER = 0;
+    public static final int DEFAULT_ORDER = 0;
 
-  private static final Logger logger = LoggerFactory.getLogger(ApolloApplicationContextInitializer.class);
-  private static final Splitter NAMESPACE_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
-  private static final String[] APOLLO_SYSTEM_PROPERTIES = {"app.id", ConfigConsts.APOLLO_CLUSTER_KEY,
-      "apollo.cacheDir", ConfigConsts.APOLLO_META_KEY};
+    private static final Logger logger = LoggerFactory.getLogger(ApolloApplicationContextInitializer.class);
+    private static final Splitter NAMESPACE_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
+    private static final String[] APOLLO_SYSTEM_PROPERTIES = {"app.id", ConfigConsts.APOLLO_CLUSTER_KEY,
+        "apollo.cacheDir", ConfigConsts.APOLLO_META_KEY};
 
-  private final ConfigPropertySourceFactory configPropertySourceFactory = SpringInjector
-      .getInstance(ConfigPropertySourceFactory.class);
+    private final ConfigPropertySourceFactory configPropertySourceFactory = SpringInjector
+        .getInstance(ConfigPropertySourceFactory.class);
 
-  private int order = DEFAULT_ORDER;
+    private int order = DEFAULT_ORDER;
 
-  @Override
-  public void initialize(ConfigurableApplicationContext context) {
-    ConfigurableEnvironment environment = context.getEnvironment();
+    @Override
+    public void initialize(ConfigurableApplicationContext context) {
+      ConfigurableEnvironment environment = context.getEnvironment();
 
-    String enabled = environment.getProperty(PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED, "false");
-    if (!Boolean.valueOf(enabled)) {
-      logger.debug("Apollo bootstrap config is not enabled for context {}, see property: ${{}}", context, PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED);
-      return;
+      String enabled = environment.getProperty(PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED, "false");
+      if (!Boolean.valueOf(enabled)) {
+        logger.debug("Apollo bootstrap config is not enabled for context {}, see property: ${{}}", context, PropertySourcesConstants.APOLLO_BOOTSTRAP_ENABLED);
+        return;
+      }
+      logger.debug("Apollo bootstrap config is enabled for context {}", context);
+
+      initialize(environment);
     }
-    logger.debug("Apollo bootstrap config is enabled for context {}", context);
-
-    initialize(environment);
-  }
 
 
   /**

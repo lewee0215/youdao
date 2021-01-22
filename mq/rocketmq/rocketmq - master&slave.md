@@ -56,3 +56,6 @@ RocketMQ的主从同步，在默认情况下RocketMQ会优先选择从主服务�
 
 第二种是，消息消费者在向主服务器拉取消息时，如果是是主服务器，在处理消息拉取时，也会更新消息消费进度。
 
+## RocketMQ HAService：主从同步核心实现类
+https://blog.csdn.net/prestigeding/article/details/79600792
+

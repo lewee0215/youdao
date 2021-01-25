@@ -2,6 +2,8 @@
 http://doc.redisfans.com/topic/cluster-tutorial.html#redis-guarantee  
 Redis 集群使用数据分片（sharding）而非一致性哈希（consistency hashing）来实现： 一个 Redis 集群包含 16384 个哈希槽（hash slot）， 数据库中的每个键都属于这 16384 个哈希槽的其中一个， 集群使用公式 CRC16(key) % 16384 来计算键 key 属于哪个槽， 其中 CRC16(key) 语句用于计算键 key 的 CRC16 校验和
 
+Redis 集群不像单机 Redis 那样支持多数据库功能， 集群只使用默认的 0 号数据库， 并且不能使用 SELECT index 命令
+
 ## Redis Cluster 节点ID：
 http://shift-alt-ctrl.iteye.com/blog/2285470  
 
@@ -141,3 +143,7 @@ https://blog.csdn.net/xmj_csdn/article/details/74908951
 如果我们要在查找节点 A 之后，继续查找节点 B ，那么客户端在向节点 B 发送命令请求之前，应该先发送一个 ASKING 命令，否则这个针对带有 IMPORTING 状态的槽的命令请求将被节点 B 拒绝执行。
 
 接收到客户端 ASKING 命令的节点将为客户端设置一个一次性的标志（flag），使得客户端可以执行一次针对 IMPORTING 状态的槽的命令请求。
+
+
+### Gossip 算法
+https://www.cnblogs.com/kaleidoscope/p/9630316.html  

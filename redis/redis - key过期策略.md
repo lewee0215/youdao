@@ -21,12 +21,15 @@ Redis并没采用 定时删除 的策略，而是采用 定期删除 和 惰性�
 这是一个平凡的概率算法，基本上的假设是，我们的样本是这个密钥控件，并且我们不断重复过期检测，直到过期的keys的百分比低于25%,这意味着，在任何给定的时刻，最多会清除1/4的过期keys。
 
 ## maxmemory-policy 六种方式
-1、volatile-lru：只对设置了过期时间的key进行LRU（默认值） 
-2、allkeys-lru ： 删除lru算法的key   
-3、volatile-random：随机删除即将过期key   
-4、allkeys-random：随机删除   
-5、volatile-ttl ： 删除即将过期的   
-6、noeviction ： 永不过期，返回错误
+https://github.com/sohutv/cachecloud/wiki/6.%E5%B8%B8%E8%A7%81%E6%A6%82%E5%BF%B5%E5%92%8C%E9%97%AE%E9%A2%98  
+1. volatile-lru：只对设置了过期时间的key进行LRU（默认值） 
+2. allkeys-lru ： 删除lru算法的key   
+3. volatile-random：随机删除即将过期key   
+4. allkeys-random：随机删除   
+5. volatile-ttl ： 删除即将过期的   
+6. noeviction ： 永不过期，返回错误
+
+
 
 
 

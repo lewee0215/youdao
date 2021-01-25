@@ -64,12 +64,6 @@ Cluster中实现了一个称为“hash tags”的概念，每个key都可以包�
 2. 如果一定要使用多key操作，请确保所有的key都在一个node上，具体方法是使用“hash tag”方案
 hash tag方案是一种数据分布的例外情况
 
-
-### redis-trib 命令
-当我们有了六个正在运行中的 Redis 实例， 接下来我们需要使用这些实例来创建集群， 并为每个节点编写配置文件。
-通过使用 Redis 集群命令行工具 redis-trib ， 编写节点配置文件的工作可以非常容易地完成： redis-trib 位于 Redis 源码的 src 文件夹中， 它是一个 Ruby 程序， 这个程序通过向实例发送特殊命令来完成创建新集群， 检查集群， 或者对集群进行重新分片（reshared）等工作。
-
-
 ### hash tags
 在计算hash slots时有一个意外的情况，用于支持“hash tags”；hash tags用于确保多个keys能够被分配在同一个hash slot中，用于支持multi-key操作。
 
@@ -93,13 +87,13 @@ cluster-node-timeout 5000
 appendonly yes
 **  cluster-conf-file 选项则设定了保存节点配置文件的路径， 默认值为 nodes.conf.节点配置文件无须人为修改，它由 Redis 集群在启动时创建，在需要时自动进行更新。
 
-### 集群一致性
+### Redis - Cluster 集群一致性
 https://blog.csdn.net/u011535541/article/details/78834565
 主从和slot的一致性是由epoch来管理的. epoch就像Raft中的term, 但仅仅是像. 每个节点有一个自己独特的epoch和整个集群的epoch, 为简化下面都称为node epoch和cluster epoch. 
 node epoch一直递增, 其表示某节点最后一次变成主节点或获取新slot所有权的逻辑时间. 
 cluster epoch则是整个集群中最大的那个node epoch. 我们称递增node epoch为bump epoch, 它会用当前的cluster epoch加一来更新自己的node epoch.
 
-### 失效检测
+### Redis - Cluster 失效检测
 Redis集群失效检测是用来识别出大多数节点何时无法访问某一个主节点或从节点。
 每个节点都有一份跟其他已知节点相关的标识列表。其中有两个标志是用于失效检测，分别是PFAIL和FAIL。PFAIL表示可能失效，这是一个非公认的失效类型。FAIL表示一个节点已经失效，而这个情况已经被大多数节点在，某段时间内确认过了。
 PFAIL标识：

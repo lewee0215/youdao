@@ -29,6 +29,10 @@ LoadTimeWeaverAware
 2. 索引原则 , B+树和B树的区别
 3. MVCC
 
+> 躺平 01.25 19：00
+1. 索引 rowid 查找行数据
+2. 本地事务表
+3. Nacos 与 Zookeeper 选型
 
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID

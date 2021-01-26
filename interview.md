@@ -29,6 +29,10 @@ LoadTimeWeaverAware
 2. 索引原则 , B+树和B树的区别
 3. MVCC
 
+4. 零钱找零算法
+5. 毒药小老鼠
+6. 字符串反转
+
 > 躺平 01.25 19：00
 1. 索引 rowid 查找行数据
 2. 本地事务表
@@ -44,6 +48,8 @@ else get
         dosomething
     else 
         return 
+
+分布式锁自旋 + 队列等待
 
 ## 意向
 * 顺丰

@@ -141,3 +141,7 @@ https://blog.csdn.net/qq_35181209/article/details/77435144
 
 6、执行clear方法
     LinkedBlockingQueue中会加上两把锁
+
+## DelayQueue
+https://www.cnblogs.com/bjxq-cs88/p/9759571.html  
+DelayQueue的泛型参数需要实现Delayed接口，Delayed接口继承了Comparable接口，DelayQueue内部使用非线程安全的优先队列（PriorityQueue），并使用Leader/Followers模式，最小化不必要的等待时间。DelayQueue不允许包含null元素  

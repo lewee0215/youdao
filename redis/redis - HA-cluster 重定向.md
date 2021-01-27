@@ -1,4 +1,9 @@
 ## moved异常与ask异常的区别: 两者都是客户端重定向
+https://www.cnblogs.com/kaleidoscope/p/9635163.html  
+因为Node并不提供Proxy机制，当Client将请求发给错误的nodes时（此node上不存在此key所属的slot），node将会反馈“MOVED”或者“ASK”错误信息，以便Client重新定向到合适的node
+
+通常客户端会缓存集群中nodes与slots的映射关系，并在遇到“Redirected”错误反馈时，才会更新本地的缓存
+
 moved异常：槽已经确定迁移，即槽已经不在当前节点
 ask异常：槽还在迁移中
 

@@ -1,7 +1,13 @@
 # Redis Cluster Sharding
 http://doc.redisfans.com/topic/cluster-tutorial.html#redis-guarantee  
+https://www.cnblogs.com/williamjie/p/11132211.html  
 
-Redis 集群使用数据分片（sharding）而非一致性哈希（consistency hashing）来实现： 
+Redis Cluster集群有多个shard组成，每个shard可以有一个master和多个slaves构成，数据根据hash slots配额分布在多个shard节点上
+
+redis-cluster把所有的物理节点映射到[0-16383]slot上,cluster 负责维护node<->slot<->value
+
+### Redis Cluster 哈希槽结构 
+https://www.cnblogs.com/kaleidoscope/p/9635163.html  
 
 一个 Redis 集群包含 16384 个哈希槽（hash slot）， 数据库中的每个键都属于这 16384 个哈希槽的其中一个， 
 集群使用公式 CRC16(key) % 16384 来计算键 key 属于哪个槽， 其中 CRC16(key) 语句用于计算键 key 的 CRC16 校验和
@@ -11,7 +17,6 @@ Redis 集群不像单机 Redis 那样支持多数据库功能， 集群只使用
 https://blog.csdn.net/liuxiao723846/article/details/86715614
 集群数据以数据分布表的方式保存在各个slot上。集群只有在16384个slot都有对应的节点才能正常工作
 
-### 哈希槽结构 
 很容易添加或者删除节点. 比如如果我想新添加个节点D, 我需要从节点 A, B, C中得部分槽到D上. 如果我像移除节点A,需要将A中得槽移到B和C节点上,然后将没有任何槽的A节点从集群中移除即可. 
 由于从一个节点将哈希槽移动到另一个节点并不会停止服务,所以无论添加删除或者改变某个节点的哈希槽的数量都不会造成集群不可用的状态.
 http://shift-alt-ctrl.iteye.com/blog/2285470
@@ -27,27 +32,24 @@ http://shift-alt-ctrl.iteye.com/blog/2285470
 集群可以自动识别出IP/端口号的变化，并将这一信息通过Gossip协议广播给其他节点，节点信心包括：
 
 a）节点所使用的IP地址和TCP端口号。
-b）节点的标志（flags）。
+b）节点的标志（flags）比如表示此node是maste、slave等。
 c）节点负责处理的哈希槽。
 d）节点最新一次使用集群连接发送PING数据包（packet）的时间。
 e）节点最近一次在回复中接收到PONG数据包的时间。
 f）集群将该节点标记为下线的时间。
 g）该节点的从节点数量。
 
+// https://www.cnblogs.com/kaleidoscope/p/9635163.html
+h) currentEpoch和configEpoch
+
 如果该节点是从节点的话，那么它会记录主节点的节点ID。如果这是一个主节点的话，那么主节点ID这一栏的值为0000000
 节点组成集群的方式使用cluster meet命令，meet命令可以让两个节点相互握手，然后通过gossip协议交换信息
 
-### Redis Cluster 架构细节
-https://www.cnblogs.com/williamjie/p/11132211.html  
+### gossip协议
+节点间状态同步：gossip协议，最终一致性  
+https://www.cnblogs.com/kaleidoscope/p/9635163.html
 
-(1)所有的redis节点彼此互联(PING-PONG机制),内部使用二进制协议优化传输速度和带宽.每个节点都知道另外节点负责管理的槽范围
-Redis Cluster通过ping/pong消息实现故障发现：不需要sentinel
-
-(2)节点的fail是通过集群中超过半数的节点检测失效时才生效.
-
-(3)客户端与redis节点直连,不需要中间proxy层.客户端不需要连接集群所有节点,连接集群中任何一个可用节点即可
-
-(4)redis-cluster把所有的物理节点映射到[0-16383]slot上,cluster 负责维护node<->slot<->value
+>  gossip：最终一致性，分布式服务数据同步算法，node首选需要知道（可以读取配置）集群中至少一个seed node，此node向seed发送ping请求，此时seed节点pong返回自己已知的所有nodes列表，然后node解析nodes列表并与它们都建立tcp连接，同时也会向每个nodes发送ping，并从它们的pong结果中merge出全局nodes列表，并逐步与所有的nodes建立连接.......数据传输的方式也是类似，网络拓扑结构为full mesh
 
 ### Redis Cluster 命令支持
 > Redis 集群不支持那些需要同时处理多个键的 Redis 命令， 因为执行这些命令需要在多个 Redis 节点之间移动数据， 并且在高负载的情况下， 这些命令将降低 Redis 集群的性能， 并导致不可预测的行为  
@@ -65,12 +67,15 @@ Cluster中实现了一个称为“hash tags”的概念，每个key都可以包�
 hash tag方案是一种数据分布的例外情况
 
 ### hash tags
+https://www.cnblogs.com/kaleidoscope/p/9635163.html  
 在计算hash slots时有一个意外的情况，用于支持“hash tags”；hash tags用于确保多个keys能够被分配在同一个hash slot中，用于支持multi-key操作。
 
+即“foo”与“{foo}.student”将得到相同的slot值，不过“{foo}.student”仍作为key来保存数据，即redis中数据的key仍为“{foo}.student” 
+
 关于负载均衡，集群的Redis Instance之间可以迁移数据，以Slot为单位，但不是自动的，需要外部命令触发。
+
 需要注意的是：必须要3个或以上的主节点，否则在创建集群时会失败，并且当存活的主节点数小于总节点数的一半时，整个集群就无法提供服务了。
 
-集群的节点(Redis Instance)和节点之间两两定期交换集群内节点信息并且更新，从发送节点的角度看，这些信息包括：集群内有哪些节点，IP和PORT是什么，节点名字是什么，节点的状态(比如OK，PFAIL，FAIL，后面详述)是什么，包括节点角色(master 或者 slave)等。
 集群由N组主从Redis Instance组成。主可以没有从，但是没有从 意味着主宕机后主负责的Slot读写服务不可用。一个主可以有多个从，主宕机时，某个从会被提升为主，具体哪个从被提升为主，协议类似于Raft
 
 ### Redis - Cluster 数据迁移

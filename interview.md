@@ -38,6 +38,9 @@ LoadTimeWeaverAware
 2. 本地事务表
 3. Nacos 与 Zookeeper 选型
 
+4. 分库分表热切换
+5. select for update
+
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID
         threadlocal.put 

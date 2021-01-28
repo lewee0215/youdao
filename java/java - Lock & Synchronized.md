@@ -1,6 +1,31 @@
-Java - Synchronized关键字和锁升级
+# Java - Synchronized 关键字和锁升级
 https://blog.csdn.net/tongdanping/article/details/79647337  
 *注意：为了避免无用的自旋，轻量级锁一旦膨胀为重量级锁就不会再降级为轻量级锁了；偏向锁升级为轻量级锁也不能再降级为偏向锁
+
+## Java 对象内存信息
+https://blog.csdn.net/tongdanping/article/details/79647337  
+对象是存放在堆内存中的，对象大致可以分为三个部分，分别是对象头、实例变量和填充字节
+* 对象头的主要是由 MarkWord 和 Klass Point (类型指针) 组成  
+Klass Point是是对象指向它的类元数据的指针，虚拟机通过这个指针来确定这个对象是哪个类的实例  
+Mark Word用于存储对象自身的运行时数据。如果对象是数组对象，那么对象头占用3个字宽（Word），如果对象是非数组对象，那么对象头占用2个字宽。（1word = 2 Byte = 16 bit）
+* 实例变量存储的是对象的属性信息，包括父类的属性信息，按照4字节对齐
+* 填充字符，因为虚拟机要求对象字节必须是8字节的整数倍，填充字符就是用于凑齐这个整数倍的
+
+***Java 对象头 MarkWord 信息***  
+https://blog.csdn.net/qq_26542493/article/details/90938070  
+Java对象处于5种不同状态时，Mark Word中64个位的表现形式  
+![alt text](https://img-blog.csdn.net/20180322153316377 "title")
+
+| 标志位   | 说明   | 
+| :-        | :-         |
+| hashcode      | 31位的对象标识hashCode，采用延迟加载技术。调用方法System.identityHashCode()计算，并会将结果写到该对象头中。当对象加锁后（偏向、轻量级、重量级），MarkWord的字节没有足够的空间保存hashCode，因此该值会移动到管程Monitor中       | 
+|thread|持有偏向锁的线程ID|
+|epoch|偏向锁的时间戳|
+|age|4位的Java对象年龄。在GC中，如果对象在Survivor区复制一次，年龄增加1。当对象达到设定的阈值时，将会晋升到老年代。默认情况下，并行GC的年龄阈值为15，并发GC的年龄阈值为6。由于age只有4位，所以最大值为15，这就是-XX:MaxTenuringThreshold选项最大值为15的原因|
+|ptr_to_lock_record|轻量级锁状态下，指向栈中锁记录的指针|
+|ptr_to_heavyweight_monitor|重量级锁状态下，指向对象监视器Monitor的指针|
+| biased_lock        |对象是否启用偏向锁标记，只占1个二进制位。为1时表示对象启用偏向锁，为0时表示对象没有偏向锁。lock和biased_lock共同表示对象处于什么锁状态       | 
+| lock        | 2位的锁状态标记位，由于希望用尽可能少的二进制位表示尽可能多的信息，所以设置了lock标记       | 
 
 ## 偏向锁
 https://blog.csdn.net/qq838642798/article/details/64439761  
@@ -16,7 +41,7 @@ https://blog.csdn.net/qq838642798/article/details/64439761
 https://blog.csdn.net/qq838642798/article/details/64439761  
 所谓轻量级锁是比偏向锁更耗资源的锁,实现机制是,线程在竞争轻量级锁前,在线程的栈内存中分配一段空间作为锁记录空间(就是轻量级锁对应的对象的对象头的字段的拷贝),拷贝好后,线程通过CAS去竞争这个对象锁，试图把对象的对象头子段改成指向所记录空间，如果成功则说明获取轻量级锁成功，如果失败，则进入自旋取试着获取锁。如果自旋到一定次数还是不能获取到锁，则进入重量级锁
 
-1. 线程1获取轻量级锁时会先把锁对象的对象头MarkWord复制一份到线程1的栈帧中创建的用于存储锁记录的空间（称为DisplacedMarkWord），然后使用CAS把对象头中的内容替换为线程1存储的锁记录（DisplacedMarkWord）的地址；
+1. 线程1获取轻量级锁时会先把锁对象的对象头MarkWord复制一份到线程1的栈帧中创建的用于存储锁记录的空间（称为DisplacedMarkWord），然后使用CAS把对象头中的内容替换为线程1存储的锁记录（<font color='yellow'>DisplacedMarkWord</font>）的地址；
 2. 如果在线程1复制对象头的同时（在线程1CAS之前），线程2也准备获取锁，复制了对象头到线程2的锁记录空间中，但是在线程2CAS的时候，发现线程1已经把对象头换了，线程2的CAS失败，那么线程2就尝试使用自旋锁来等待线程1释放锁
 
 ### 轻量级锁升级条件

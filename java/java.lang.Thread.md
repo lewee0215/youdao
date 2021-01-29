@@ -18,6 +18,7 @@ public enum State {
 如果有synchronized同步块，其他线程仍然不能访问共享数据  
 
 * wait()、notify()、notifyAll()  
+
     - wait：使一个线程处于等待状态，释放CPU和锁资源  
 Causes the current thread to wait until either another thread invokes  
 The current thread must own this object's monitor  
@@ -35,7 +36,6 @@ synchronized (obj) {
     ... // Perform action appropriate to condition     /*  */
 }
 ```
-
 
 * yield()  
 yield方法仅释放CPU执行权，锁仍然占用，yield()方法不会释放锁，从而让其他具有相同优先级的等待线程获取执行权，线程会被放入就绪队列，会在短时间内再次执行

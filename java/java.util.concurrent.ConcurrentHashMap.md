@@ -132,6 +132,3 @@ https://blog.csdn.net/weixin_43185598/article/details/87938882
         return null;
     }
 ```
-
-1. ConcurrenHashMap hash值高低位作用
-2. 初始化过程

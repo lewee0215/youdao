@@ -27,7 +27,7 @@ public class ApplicationTest {
 	@Test
 	public void test() {
 		LambdaQueryWrapper<ShardingUser> queryWrapper = new LambdaQueryWrapper<ShardingUser>();
-		queryWrapper.eq(ShardingUser::getClientSn, 12345);
+		queryWrapper.eq(ShardingUser::getClientSn, 12346);
 		ShardingUser reuslt = iShardingUserService.getOne(queryWrapper);
 		System.out.println(JSON.toJSONString(reuslt));
 	}

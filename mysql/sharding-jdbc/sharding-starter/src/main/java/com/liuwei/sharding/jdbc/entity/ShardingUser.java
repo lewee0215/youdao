@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
  * @author author
  * @since 2021-01-29
  */
-@TableName("sharding_user_0")
+//@TableName("sharding_user_0")
 public class ShardingUser implements Serializable {
 
     private static final long serialVersionUID=1L;

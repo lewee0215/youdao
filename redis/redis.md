@@ -43,3 +43,5 @@ Redis 集群不保证数据的强一致性（strong consistency）： 在特定�
 主节点 B 将刚刚执行的写命令复制给它的从节点 B1 、 B2 和 B3 
 
 redis multi 和 lua 脚本执行的区别
+
+redis 请求队列实现

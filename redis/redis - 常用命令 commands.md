@@ -10,8 +10,11 @@
 https://blog.csdn.net/zy450271923/article/details/106970148/  
 zset 使用的是跳跃表（skipList）的数据结构 
 
-> setbit key offset value  
-> 说明：给一个指定key的值得第offset位 赋值为value, 返回值为 oldvalue
+> ZADD key score1 member1 [score2 member2]
+
+向有序集合添加一个或多个成员，或者更新已存在成员的分数
+
+
 
 # Redis Cluster 
 

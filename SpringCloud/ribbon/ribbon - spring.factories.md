@@ -1,4 +1,5 @@
 # spring-cloud-netflix-ribbon # spring.factories
+
 ```java
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration
@@ -103,6 +104,7 @@ public interface ServiceInstanceChooser {
     ServiceInstance choose(String serviceId);
 }
 
+// LoadBalancerClient 仅实现URL重构和请求的执行
 public interface LoadBalancerClient extends ServiceInstanceChooser {
     // 执行请求内容
     <T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException;

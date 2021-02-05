@@ -16,6 +16,24 @@ https://blog.csdn.net/alex_xfboy/article/details/88166216
 
 # Ribbon - IRule 负载规则
 https://www.cnblogs.com/fx-blog/p/11713872.html
+
+```java
+public interface IRule{
+    /*
+     * choose one alive server from lb.allServers or
+     * lb.upServers according to key
+     * 
+     * @return choosen Server object. NULL is returned if none
+     *  server is available 
+     */
+    public Server choose(Object key);
+    
+    public void setLoadBalancer(ILoadBalancer lb);
+    
+    public ILoadBalancer getLoadBalancer();    
+}
+```
+
 | P规则类型                     | 说明    | 
 | :-                           |:-:        | 
 | AvailabilityFilteringRule    | 过滤掉一直连接失败的被标记为circuit tripped（电路跳闸）的后端Service，并过滤掉那些高并发的后端Server或者使用一个AvailabilityPredicate来包含过滤Server的逻辑，其实就是检查status的记录的各个Server的运行状态     | 
@@ -33,6 +51,29 @@ https://www.cnblogs.com/li3807/p/8889612.html
 
 IPing 是 Ribbon 框架中，负责检查服务实例是否存活（UP）
 https://blog.csdn.net/weixin_34148340/article/details/93079295 
+
+```java
+public interface IPing {
+    
+    /**
+     * Checks whether the given <code>Server</code> is "alive" i.e. should be
+     * considered a candidate while loadbalancing
+     * 
+     */
+    public boolean isAlive(Server server);
+
+    // PingUrl 测试Code
+    // false = 是否Https请求
+    public static void main(String[] args){
+        PingUrl p = new PingUrl(false,"/cs/hostRunning");
+        p.setExpectedContent("true");
+        Server s = new Server("ec2-75-101-231-85.compute-1.amazonaws.com", 7101);
+        
+        boolean isAlive = p.isAlive(s);
+        System.out.println("isAlive:" + isAlive);
+    }
+}
+```
 
 | Ping类型       | 说明    | 
 | :-             |:-:        | 

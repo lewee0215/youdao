@@ -55,6 +55,8 @@ Markdown 插入链接：
 Markdown 插入图片：
 ![alt text](https://fanyi.baidu.com/favicon.ico "title")
 
+![](https://fanyi.baidu.com/favicon.ico)
+
 Markdown 区块引用是在段落开头使用 > 符号 ，然后后面紧跟一个空格符号  
 > 区块引用  
 > 菜鸟教程  

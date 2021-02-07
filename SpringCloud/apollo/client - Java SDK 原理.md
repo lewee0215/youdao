@@ -25,6 +25,7 @@ apollo:
 ```
 
 #  客户端获取配置（Java API）
+Apollo 本身是可以基于事件监听实时推送（Http长连接）变更（AutoUpdateConfigChangeListener），也会定时拉取（fallback）最新配置  
 ```java
 Config config = ConfigService.getAppConfig();
 Integer defaultRequestTimeout = 200;

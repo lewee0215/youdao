@@ -15,7 +15,30 @@ com.netflix.ribbon#ribbon-eureka;2.2.0
 class LegacyEurekaClientProvider implements Provider<EurekaClient>
 
 ## NIWSDiscoveryPing
-public class NIWSDiscoveryPing extends AbstractLoadBalancerPing
+```java
+/**
+ * "Ping" Discovery Client
+ * i.e. we dont do a real "ping". We just assume that the server is up if Discovery Client says so
+ */
+public class NIWSDiscoveryPing extends AbstractLoadBalancerPing{
+    public boolean isAlive(Server server) {
+        boolean isAlive = true;
+        if (server!=null && server instanceof DiscoveryEnabledServer){
+            DiscoveryEnabledServer dServer = (DiscoveryEnabledServer)server;	            
+            InstanceInfo instanceInfo = dServer.getInstanceInfo();
+            if (instanceInfo!=null){	                
+                InstanceStatus status = instanceInfo.getStatus();
+                if (status!=null){
+                    isAlive = status.equals(InstanceStatus.UP);
+                }
+            }
+        }
+        return isAlive;
+    }
+    ...
+}
+
+```
 
 ## DiscoveryEnabledNIWSServerList
 public class DiscoveryEnabledNIWSServerList extends AbstractServerList<DiscoveryEnabledServer>
@@ -91,6 +114,34 @@ public class EurekaRibbonClientConfiguration {
 		DomainExtractingServerList serverList = new DomainExtractingServerList(
 				discoveryServerList, config, this.approximateZoneFromHostname);
 		return serverList;
+	}
+
+    @PostConstruct
+	public void preprocess() {
+        // 获取当前配置Zone
+		String zone = ConfigurationManager.getDeploymentContext().getValue(ContextKey.zone);
+		if (this.clientConfig != null && StringUtils.isEmpty(zone)) {
+			if (this.approximateZoneFromHostname && this.eurekaConfig != null) {
+				String approxZone = ZoneUtils.extractApproximateZone(this.eurekaConfig.getHostName(false));
+				log.debug("Setting Zone To " + approxZone);
+				ConfigurationManager.getDeploymentContext().setValue(ContextKey.zone,approxZone);
+			}
+			else {
+				String availabilityZone = this.eurekaConfig == null ? null: this.eurekaConfig.getMetadataMap().get("zone");
+				if (availabilityZone == null) {
+					String[] zones = this.clientConfig.getAvailabilityZones(this.clientConfig.getRegion());
+					// Pick the first one from the regions we want to connect to
+					availabilityZone = zones != null && zones.length > 0 ? zones[0]: null;
+				}
+				if (availabilityZone != null) {
+					// You can set this with archaius.deployment.* (maybe requires
+					// custom deployment context)?
+					ConfigurationManager.getDeploymentContext().setValue(ContextKey.zone,availabilityZone);
+				}
+			}
+		}
+		setRibbonProperty(this.serviceId, DeploymentContextBasedVipAddresses.key(),this.serviceId);
+		setRibbonProperty(this.serviceId, EnableZoneAffinity.key(), "true");
 	}
 }
 ```

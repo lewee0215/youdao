@@ -1,6 +1,6 @@
 # spring-cloud-netflix-ribbon # spring.factories
 
-```java
+```java spring.factories
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration
 ```

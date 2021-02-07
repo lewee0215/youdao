@@ -172,6 +172,7 @@ public interface ILoadBalancer {
 // ZoneAwareLoadBalancer 则是对 DynamicServerListLoadBalancer 的扩展，它主要增加了区域过滤的功能
 ```
 > DynamicServerListLoadBalancer
+DynamicServerListLoadBalancer，采用的是线性轮询的方式来选择调用服务实例，该算法实现简单并没有区域Zone的概念  
 
 DynamicServerListLoadBalancer组合Rule、IPing、ServerList、ServerListFilter、ServerListUpdater 实现类，实现动态更新和过滤更新服务列表
 
@@ -181,6 +182,29 @@ DynamicServerListLoadBalancer的子类，主要加入zone的因素。统计每�
 
 ```java
 public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLoadBalancer<T> {
+
+    @Override
+    public void setServersList(List lsrv) {
+        super.setServersList(lsrv);
+        List<T> serverList = (List<T>) lsrv;
+        Map<String, List<Server>> serversInZones = new HashMap<String, List<Server>>();
+        // 通过 Server 获取 zone 信息
+        for (Server server : serverList) {
+            // make sure ServerStats is created to avoid creating them on hot path
+            getLoadBalancerStats().getSingleServerStat(server);
+            String zone = server.getZone();
+            if (zone != null) {
+                zone = zone.toLowerCase();
+                List<Server> servers = serversInZones.get(zone);
+                if (servers == null) {
+                    servers = new ArrayList<Server>();
+                    serversInZones.put(zone, servers);
+                }
+                servers.add(server);
+            }
+        }
+        setServerListForZones(serversInZones);
+    }
 
     @Override
     public Server chooseServer(Object key) {

@@ -4,15 +4,6 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.alibaba.boot.nacos.discovery.autoconfigure.NacosDiscoveryAutoConfiguration
 ```
 
-## spring-cloud-alibaba-nacos-discovery-0.2.2.RELEASE.jar
-```spring.factories
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.springframework.cloud.alibaba.nacos.NacosDiscoveryAutoConfiguration,\
-  org.springframework.cloud.alibaba.nacos.ribbon.RibbonNacosAutoConfiguration,\
-  org.springframework.cloud.alibaba.nacos.endpoint.NacosDiscoveryEndpointAutoConfiguration,\
-  org.springframework.cloud.alibaba.nacos.discovery.NacosDiscoveryClientAutoConfiguration
-```
-
 ## NacosDiscoveryAutoConfiguration
 服务注册: 遵循spring-cloud-common标准，实现 AutoServiceRegistration、ServiceRegistry、Registration
 ```java
@@ -100,3 +91,49 @@ https://blog.csdn.net/qq_32748869/article/details/107373969
 
 # Ribbon 集成 Nacos Discovery 服务
 https://www.colabug.com/2020/0409/7231968/
+
+## Nacos SpringBoot 启动源代码
+```java
+// NacosDiscoveryAutoConfiguration
+@ConditionalOnProperty(name = NacosDiscoveryConstants.ENABLED, matchIfMissing = true)
+@ConditionalOnMissingBean(name = DISCOVERY_GLOBAL_NACOS_PROPERTIES_BEAN_NAME)
+@EnableNacosDiscovery
+@EnableConfigurationProperties(value = NacosDiscoveryProperties.class)
+@ConditionalOnClass(name = "org.springframework.boot.context.properties.bind.Binder")
+public class NacosDiscoveryAutoConfiguration {
+
+}
+
+// EnableNacosDiscovery
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Import(NacosDiscoveryBeanDefinitionRegistrar.class)
+public @interface EnableNacosDiscovery {}
+
+// NacosDiscoveryBeanDefinitionRegistrar
+public class NacosDiscoveryBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
+
+    private Environment environment;
+
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+        AnnotationAttributes attributes = AnnotationAttributes.fromMap(
+                importingClassMetadata.getAnnotationAttributes(EnableNacosDiscovery.class.getName()));
+        // Register Global Nacos Properties Bean
+        registerGlobalNacosProperties(attributes, registry, environment, DISCOVERY_GLOBAL_NACOS_PROPERTIES_BEAN_NAME);
+        // Register Nacos Common Beans
+        // CacheableEventPublishingNacosServiceFactory.class
+        // AnnotationNacosInjectedBeanPostProcessor.class
+        registerNacosCommonBeans(registry);
+        // Register Nacos Discovery Beans (NamingServiceBeanBuilder.class)
+        registerNacosDiscoveryBeans(registry);
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
+}
+
+```

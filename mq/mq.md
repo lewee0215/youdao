@@ -1,3 +1,13 @@
+# MQTT 服务质量标准
+https://blog.csdn.net/fuzhongmin05/article/details/105205124  
+在 MQTT（Message Queuing Telemetry Transport，消息队列遥测传输协议）中，给出了三种传递消息时能够提供的服务质量标准，这三种服务质量从低到高依次是：
+
+* At most once: 至多一次。消息在传递时，最多会被送达一次。换一个说法就是，没什么消息可靠性保证，允许丢消息。一般都是一些对消息可靠性要求不太高的监控场景使用。
+* At least once: 至少一次。消息在传递时，至少会被送达一次。也就是说，不允许丢消息，但是允许有少量重复消息出现。
+* Exactly once：恰好一次。消息在传递时，只会被送达一次，不允许丢失也不允许重复，这个是最高的等级
+
+现在常用的绝大部分消息队列提供的服务质量都是At least once，包括RocketMQ、RabbitMQ和Kafka都是这样
+
 # JMS && AMQP 协议  
 AMQP中增加了Exchange和Binging的角色。生产者把消息发布到Exchange上，消息最终到达队列并被消费者接收，而Binding决定交换器的消息应该发送到哪个队列  
 

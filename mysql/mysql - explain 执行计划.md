@@ -12,6 +12,7 @@ type ：查询检索方式
 possible_keys : 可能使用的索引  
 key : 真实使用的  
 key_len : MySQL中使用索引字节长度  
+ref : 
 rows : mysql 预估为了找到所需的行而要读取的行数  
 extra : 附加信息
 

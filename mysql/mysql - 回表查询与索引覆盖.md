@@ -15,6 +15,9 @@ InnoDB <font color='yellow'>聚集索引的叶子节点存储行记录</font> �
 InnoDB <font color='yellow'>普通索引的叶子节点存储主键值</font> （MyISAM则是存储的行记录头指针）
 普通索引因为无法直接定位行记录，其查询过程在通常情况下是需要扫描两遍索引树的
 
+https://cloud.tencent.com/developer/news/325885
+在每一个Leaf Node 上面出了存放索引键值和主键的相关信息之外，B+Tree还存储了指向与该 Leaf Node 相邻的后一个 LeafNode 的指针信息，这主要是为了加快检索多个相邻 Leaf Node 的效率
+
 ## InnoDB 索引覆盖
 如果一个索引覆盖（包含）了所有需要查询的字段的值，这个索引就是覆盖索引。
 

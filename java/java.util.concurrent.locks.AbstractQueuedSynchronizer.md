@@ -15,14 +15,18 @@ CLH（Craig，Landin，and Hagersten）队列是一个虚拟的双向队列，�
 AQS是将每一条请求共享资源的线程封装成一个CLH锁队列的一个结点（Node），来实现锁的分配
 
 https://blog.csdn.net/m_xiaoer/article/details/73459444  
+<font color='yellow'>
 AQS维护了一个state和一个FIFO线程等待队列，多线程竞争被阻塞的时候会进入该队列 
+</font>
 
 ![alt text](https://img-blog.csdn.net/20170619171517217 "title")
 
 
-## state就是共享资源，其访问方式有如下三种：
+state就是共享资源，其访问方式有如下三种：  
 https://blog.csdn.net/striveb/article/details/86761900  
-getState(); setState(); compareAndSetState();
+1. getState();   
+2. setState();   
+3. compareAndSetState();
 
 ```java
 private transient volatile Node head;

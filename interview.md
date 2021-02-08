@@ -1,3 +1,7 @@
+# Remark
+假设谈话对象的身份角色,可以协助切换你的表达方式和态度  
+所以,适当的假想可以减轻谈话时的怯场心理,增加表达的自信
+
 ## Q&A
 LoadTimeWeaverAware
 分库分表实现
@@ -42,6 +46,12 @@ LoadTimeWeaverAware
 
 4. 分库分表热切换
 5. select for update
+
+> 微盟 2021.02.07
+1. 索引上的范围查找
+2. 分库分表的数据倾斜
+3. AQS 实现原理
+4. Redis AOF 命令写入机制
 
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID

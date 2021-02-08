@@ -1,6 +1,9 @@
 # Distro 协议流程
-https://www.cnblogs.com/longge2005/archive/2004/01/13/13954856.html
-Distro用于处理ephemeral类型数据
+https://www.cnblogs.com/longge2005/archive/2004/01/13/13954856.html  
+在Nacos的Instance(实例)中提供了一个ephemeral字段，这个字段是bool类型，这个字段和ZK中的含义差不多，都代表的是否是临时节点，在Nacos中如果是临时节点就会使用AP协议，如果不是临时节点就会走CP。  
+
+当然在注册中心中所有的实例其实默认都是临时节点  
+https://cloud.tencent.com/developer/article/1650014  
 
 1. nacos启动首先从其他远程节点同步全部数据
 2. nacos每个节点是平等的都可以处理写入请求，同时把新数据同步到其他节点
@@ -28,3 +31,14 @@ Distro 协议被定位为临时数据的一致性协议 (AP)：该类型协议�
 * 负责的节点在接收到服务注册、服务心跳等写请求后将数据写入后即返回，后台异步地将数据同步给其他节点；
 
 *  节点在收到读请求后直接从本机获取后返回，无论数据是否为最新
+
+## 纯内存保存
+https://cloud.tencent.com/developer/article/1650014  
+Distro是用ConcurrentHashMap作为存储的容器，不需要使用额外的文件进行存储
+
+## 最终一致性
+
+
+## 水平扩展
+https://cloud.tencent.com/developer/article/1650014  
+在Distro中并不是每个节点都可以处理所有的读请求，但是写请求并不是每个节点都可以处理的，每个节点会根据key的hash值来判断是否应该是自己处理。写请求访问的是域名这个是会随机打到每个节点上的

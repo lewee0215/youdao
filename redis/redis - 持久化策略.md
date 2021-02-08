@@ -1,4 +1,6 @@
 # Redis 持久化策略
+https://baijiahao.baidu.com/s?id=1654694618189745916&wfr=spider&for=pc  
+
 redis有两种持久化模式，第一种是SNAPSHOTTING模式，还是一种是AOF模式
 在默认情况下，Redis的AOF持久化方式是每秒写一次磁盘（即执行fsync）
 
@@ -11,6 +13,7 @@ redis有两种持久化模式，第一种是SNAPSHOTTING模式，还是一种是
 如果你的环境一切非常良好，且服务需要接收密集性的write操作，那么建议master采取snapshot，而slave采用AOF。
 
 ## RDB 快照持久化
+
 RDB方式，是将redis某一时刻的数据持久化到磁盘中，是一种快照式的持久化方法。  
 
 redis在进行数据持久化的过程中，会先将数据写入到一个临时文件中，待持久化过程都结束了，才会用这个临时文件替换上次持久化好的文件。正是这种特性，让我们可以随时来进行备份，因为快照文件总是完整可用的。
@@ -42,11 +45,36 @@ stop-writes-on-bgsave-error yes
 ##是否启用rdb文件压缩，默认为“yes”，压缩往往意味着“额外的cpu消耗”，同时也意味这较小的文件尺寸以及较短的网络传输时间  
 rdbcompression yes 
 ```
+### dirty 计数器和lastsave 属性
+https://www.cnblogs.com/ysocean/p/9114268.html
+
+dirty 计数器记录距离上一次成功执行 save 命令或者 bgsave 命令之后，Redis服务器进行了多少次修改（包括写入、删除、更新等操作）。
+
+lastsave 属性是一个时间戳，记录上一次成功执行 save 命令或者 bgsave 命令的时间。
+
+当服务器成功执行一次修改操作，那么dirty 计数器就会加 1，而lastsave 属性记录上一次执行save或bgsave的时间，Redis 服务器还有一个周期性操作函数 severCron ,默认每隔 100 毫秒就会执行一次，该函数会遍历并检查 saveparams 数组中的所有保存条件，只要有一个条件被满足，那么就会执行 bgsave 命令。
+
+执行完成之后，dirty 计数器更新为 0 ，lastsave 也更新为执行命令的完成时间
 
 ### RDB 相关命令
 https://www.jianshu.com/p/d3ba7b8ad964  
-·save命令：阻塞当前Redis服务器，直到RDB过程完成为止，对于内存 比较大的实例会造成长时间阻塞，线上环境不建议使用
+·save命令：阻塞当前Redis服务器，Redis不能处理其他命令，直到RDB过程完成为止，对于内存比较大的实例会造成长时间阻塞，线上环境不建议使用
 ·bgsave命令：Redis进程执行fork操作创建子进程，RDB持久化过程由子 进程负责，完成后自动结束。阻塞只发生在fork阶段，一般时间很短
+
+## bgsave 执行流程
+https://blog.csdn.net/zmflying8177/article/details/103500645  
+
+1. Redis创建子进程以后，根本不进行数据的copy，主进程与子线程是共享数据的。主进程继续对外提供读写服务。
+2. 虽然不copy数据，但是kernel会把主进程中的所有内存页的权限都设为read-only，主进程和子进程访问数据的指针都指向同一内存地址。
+3. 主进程发生写操作时，因为权限已经设置为read-only了，所以会触发页异常中断（page-fault）。在中断处理中，需要被写入的内存页面会复制一份，复制出来的旧数据交给子进程使用，然后主进程该干啥就干啥。
+
+也就是说，在进行IO操作写盘的过程中（on write），对于没有改变的数据，主进程和子进程资源共享；  
+只有在出现了需要变更的数据时（写脏的数据），才进行copy操作。  
+
+
+在最理想的情况下，也就是生成RDB文件的过程中，一直没有写操作的话，就根本不会发生内存的额外占用。
+
+当然，仍然需要合理配置Linux的内存分配策略。避免在写操作过于集中时，发生因为物理内存不足导致fork失败的情况
 
 ## AOF 持久化
 aof是redis的一种记录数据库写操作的持久化方案，他会忠实的记录所有的写操作，并且以redis协议的格式存储在一个.aof文件中，在重启redis的时候，redis可以根据.aof文件的内容来恢复数据集。
@@ -80,8 +108,7 @@ auto-aof-rewrite-min-size 64mb
 auto-aof-rewrite-percentage 100 
 ```
 ### AOF 相关命令
-AOF重写过程可以手动触发和自动触发：
-
+AOF重写过程可以手动触发和自动触发：  
 ·手动触发：直接调用bgrewriteaof命令
 
 ## AOF 命令执行流程
@@ -114,20 +141,24 @@ AOF重写降低了文件占用空间，除此之外，另一个目的是：更�
 3.用diff -u来看下两个文件的差异，确认问题点  
 4.重启redis，加载修复后的AOF文件  
 
-AOF 文件格式详解：
-*<count>    	// <count>表示该命令有2个参数
-$<len>     	// <len>表示第1个参数的长度
-<content>   	// <content>表示第1个参数的内容
-$<len>     	// <len>表示第2个参数的长度
-<content>   	// <content>表示第2个参数的内容
-$<len>     	// <len>表示第3个参数的长度
-<content>   	// <content>表示第3个参数的内容
-*3          	// 接下来的一条命令有3个参数
-$3         	// 第一条命令的长度为3
-SET       	// 第一个参数
-$5          	// 第二条命令的长度为3
-mystr     	// 第二个参数
-$13         	// 第三个参数的长度为13
-this is redis // 第三个参数
+## AOF 文件格式
+https://blog.csdn.net/laiconglin/article/details/6641844  
+
+*<count>    // <count>表示该命令有2个参数  
+$<len>     	// <len>表示第1个参数的长度  
+<content>   // <content>表示第1个参数的内容  
+$<len>     	// <len>表示第2个参数的长度  
+<content>   // <content>表示第2个参数的内容  
+$<len>     	// <len>表示第3个参数的长度  
+<content>   // <content>表示第3个参数的内容  
+
+文件格式示例:
+*3          // 接下来的一条命令有3个参数  
+$3         	// 第一条命令的长度为3  
+SET       	// 第一个参数  
+$5          // 第二条命令的长度为3  
+mystr     	// 第二个参数  
+$13         // 第三个参数的长度为13  
+this is redis // 第三个参数  
 
 

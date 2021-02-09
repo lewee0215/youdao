@@ -28,6 +28,13 @@ https://www.jianshu.com/p/684b04b6c454
 线程池隔离模式，会根据服务划分出独立的线程池，系统资源的线程并发数是有限的  
 
 ### 基于信号量的隔离
+https://www.jianshu.com/p/fc19f6ed6d0d   
+HystrixCommand和HystrixObservableCommand在两个地方支持信号量：  
+1. 失败回退逻辑：当 Hystrix 需要执行失败回退逻辑时，其在调用线程（Tomcat 线程）中使用信号量
+2. 执行命令时：如果设置了 Hystrix 命令的execution.isolation.strategy属性为SEMAPHORE，则 Hystrix 会使用信号量而不是线程池来控制调用线程调用依赖服务的并发度
+
+设置 Hystrix 命令的execution.isolation.strategy属性为SEMAPHORE，则 Hystrix 会使用信号量而不是线程池来控制调用线程调用依赖服务的并发度
+
 基于信号量的隔离方式非常地简单，其核心就是使用共用变量semaphore进行原子操作，控制线程的并发量，当并发量达到一定量级时，服务禁止调用
 
 ## 请求缓存

@@ -3,7 +3,7 @@ https://www.cnblogs.com/zedosu/p/6632249.html
 
 ![](https://pic3.zhimg.com/65b7abe9bf2fcd249c789024d95bb67a_b.jpg)
 
-## 强引用
+## 强引用 HardReference
 强引用是使用最普遍的引用：Object o=new Object(); 特点：不会被GC
 将对象的引用显示地置为null：o=null; // 帮助垃圾收集器回收此对象
 

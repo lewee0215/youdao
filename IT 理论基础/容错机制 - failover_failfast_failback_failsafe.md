@@ -41,3 +41,5 @@ final void checkForComodification() {
 ```
 在ArrayList进行add，remove，clear等涉及到修改集合中的元素个数的操作时，modCount就会发生改变(modCount ++),所以当另一个线程(并发修改)或者同一个线程遍历过程中，调用相关方法使集合的个数发生改变，就会使modCount发生变化，这样在checkForComodification方法中就会抛出ConcurrentModificationException异常
 
+### 避免fail-fast
+https://blog.csdn.net/zymx14/article/details/78394464 

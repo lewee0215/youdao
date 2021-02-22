@@ -6,7 +6,7 @@ FlowRuleManager.loadRules(List<FlowRule> rules); // 修改流控规则
 DegradeRuleManager.loadRules(List<DegradeRule> rules); // 修改降级规则  
 SystemRuleManager.loadRules(List<SystemRule> rules); // 修改系统规则  
 
-Sentinel - SlotChain
+## Sentinel - SlotChain
 https://www.cnblogs.com/wuzhenzhao/p/11453649.html  
 Entry 创建的时候，同时也会创建一系列功能插槽（slot chain），这些插槽有不同的职责，例如:
 
@@ -19,3 +19,10 @@ Entry 创建的时候，同时也会创建一系列功能插槽（slot chain）�
 * DegradeSlot ：通过统计信息以及预设的规则，来做熔断降级
 
 ![](https://img2018.cnblogs.com/blog/1383365/201909/1383365-20190903163200661-600499825.png)
+
+## 监控
+https://www.jb51.net/article/199668.htm  
+Sentinel 会记录资源访问的秒级数据（若没有访问则不进行记录）并保存在本地日志中。Sentinel 控制台可以通过 Sentinel 客户端预留的 HTTP API 从秒级监控日志中拉取监控数据，并进行聚合。
+
+目前 Sentinel 控制台中监控数据聚合后直接存在内存中，未进行持久化，且仅保留最近 5 分钟的监控数据。若需要监控数据持久化的功能，可以自行扩展实现
+

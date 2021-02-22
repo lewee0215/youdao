@@ -13,6 +13,17 @@ https://blog.csdn.net/weixin_47274985/article/details/107244118
 </dependency>
 ```
 
+## Sentinel 配置文件
+```properties
+spring.application.name=blog
+
+# 配置会在应用对应的机器上启动一个 Http Server，该 Server 会与 Sentinel 控制台做交互。比如 Sentinel 控制台添加了1个限流规则，会把规则数据 push 给这个 Http Server 接收，Http Server 再将规则注册到 Sentinel 中
+spring.cloud.sentinel.transport.port=8720
+
+# 测试请替换为自己的地址
+spring.cloud.sentinel.transport.dashboard=116.190.247.112:8084
+```
+
 ## Serntinel 基础配置类
 ```java
 @Configuration
@@ -78,26 +89,21 @@ public class SentinelApplication {
 
 ### SphU.entry 初始化操作
 ```java
+// 类静态代码实现初始化
 public class Env {
-
     public static final NodeBuilder nodeBuilder = new DefaultNodeBuilder();
     public static final Sph sph = new CtSph();
-
     static {
         // If init fails, the process will exit.
         InitExecutor.doInit();
     }
-
 }
 
 public final class InitExecutor {
-
     private static AtomicBoolean initialized = new AtomicBoolean(false);
-
     /**
      * If one {@link InitFunc} throws an exception, the init process
      * will immediately be interrupted and the application will exit.
-     *
      * The initialization will be executed only once.
      */
     public static void doInit() {

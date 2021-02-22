@@ -2,9 +2,19 @@
 https://www.cnblogs.com/wuzhenzhao/p/11453649.html
 https://baijiahao.baidu.com/s?id=1652047491406252263&wfr=spider&for=pc
 
+## 限流规则定义
 FlowRuleManager.loadRules(List<FlowRule> rules); // 修改流控规则  
+
+## 降级规则定义
 DegradeRuleManager.loadRules(List<DegradeRule> rules); // 修改降级规则  
+
+## 系统规则定义
 SystemRuleManager.loadRules(List<SystemRule> rules); // 修改系统规则  
+* LOAD    
+* RT    
+* 线程数    
+* 入口 QPS    
+* CPU 使用率  
 
 ## Sentinel - SlotChain
 https://www.cnblogs.com/wuzhenzhao/p/11453649.html  

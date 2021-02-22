@@ -154,12 +154,14 @@ public class SentinelAutoConfiguration {
 		}
 	}
 
+	// 实现 @SentinelResource 注解功能
 	@Bean
 	@ConditionalOnMissingBean
 	public SentinelResourceAspect sentinelResourceAspect() {
 		return new SentinelResourceAspect();
 	}
 
+	// 提供 SentinelProtectInterceptor 类型 RestTemplate 拦截器
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
@@ -167,6 +169,8 @@ public class SentinelAutoConfiguration {
 		return new SentinelBeanPostProcessor();
 	}
 
+	// find all fields using by @SentinelDataSource annotation
+	// @SentinelDataSource An annotation to inject {@link ReadableDataSource} instance into a Spring Bean
 	@Bean
 	@ConditionalOnMissingBean
 	public SentinelDataSourcePostProcessor sentinelDataSourcePostProcessor() {

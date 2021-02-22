@@ -5,7 +5,7 @@ https://www.jb51.net/article/199668.htm
 原生版本的规则管理通过API 将规则推送至客户端并直接更新到内存中，并不能直接用于生产环境
 ![](https://img.jbzj.com/file_images/article/202011/2020111314384076.jpg)
 <font color='yellow'>
-所有的限流规则配置都存储在内存中，重启会丢失
+在 sentinel 的控制台设置的规则信息默认都是存在内存当中的,重启会丢失
 </font>
 
 ## 配置中心
@@ -36,10 +36,12 @@ https://blog.csdn.net/weixin_34400525/article/details/91420339
 ```
 
 ## spring-cloud-alibaba-sentinel-datasource-0.2.0.RELEASE.jar
-FileRefreshableDataSourceFactoryBean
-ZookeeperDataSourceFactoryBean
-NacosDataSourceFactoryBean
-ApolloDataSourceFactoryBean
+```sentinel-datasource.properties
+nacos = com.alibaba.csp.sentinel.datasource.nacos.NacosDataSource
+file =com.alibaba.csp.sentinel.datasource.FileRefreshableDataSource
+apollo = com.alibaba.csp.sentinel.datasource.apollo.ApolloDataSource
+zk = com.alibaba.csp.sentinel.datasource.zookeeper.ZookeeperDataSource
+```
 
 ## FlowRuleManager
 ```java

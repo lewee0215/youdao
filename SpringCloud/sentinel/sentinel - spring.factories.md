@@ -17,6 +17,9 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.springframework.cloud.alibaba.sentinel.SentinelWebAutoConfiguration,\
 org.springframework.cloud.alibaba.sentinel.endpoint.SentinelEndpointAutoConfiguration,\
 org.springframework.cloud.alibaba.sentinel.custom.SentinelAutoConfiguration
+
+org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker=\
+org.springframework.cloud.alibaba.sentinel.custom.SentinelCircuitBreakerConfiguration
 ```
 ### SentinelWebAutoConfiguration
 ```java
@@ -30,6 +33,9 @@ public class SentinelWebAutoConfiguration {
 	@Autowired
 	private SentinelProperties properties;
 
+	// 注册 com.alibaba.csp.sentinel.adapter.servlet.CommonFilter 
+	// 实现 URL 限流控制
+	// For REST APIs, you have to clean the URL (e.g. `/foo/1` and `/foo/2` -> `/foo/:id`)
 	@Bean
 	public FilterRegistrationBean servletRequestListener() {
 		FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
@@ -59,6 +65,8 @@ public class SentinelWebAutoConfiguration {
 ```
 
 ### SentinelEndpointAutoConfiguration
+Endpoint for Sentinel, contains ans properties and rules
+
 ```java
 @ConditionalOnClass(Endpoint.class)
 @EnableConfigurationProperties({ SentinelProperties.class })
@@ -145,7 +153,10 @@ public class SentinelAutoConfiguration {
 		if (StringUtils.hasText(properties.getServlet().getBlockPage())) {
 			WebServletConfig.setBlockPage(properties.getServlet().getBlockPage());
 		}
+
+		// DefaultUrlBlockHandler
 		urlBlockHandlerOptional.ifPresent(WebCallbackManager::setUrlBlockHandler);
+		// DefaultUrlCleaner
 		urlCleanerOptional.ifPresent(WebCallbackManager::setUrlCleaner);
 
 		// earlier initialize
@@ -161,6 +172,7 @@ public class SentinelAutoConfiguration {
 		return new SentinelResourceAspect();
 	}
 
+	// 实现出站流控
 	// 提供 SentinelProtectInterceptor 类型 RestTemplate 拦截器
 	@Bean
 	@ConditionalOnMissingBean

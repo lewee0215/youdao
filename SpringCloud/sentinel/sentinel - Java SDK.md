@@ -113,7 +113,7 @@ public final class InitExecutor {
         try {
             // /META-INF/services/com.alibaba.csp.sentinel.init.InitFunc
             //com.alibaba.csp.sentinel.transport.init.CommandCenterInitFunc
-            //com.alibaba.csp.sentinel.transport.init.HeartbeatSenderInitFunc
+            //com.alibaba.csp.sentinel.transport.init.HeartbeatSenderInitFunc  在客户端首次调用后，默认为每隔10秒向控制台发送心跳包
             ServiceLoader<InitFunc> loader = ServiceLoader.load(InitFunc.class);
             List<OrderWrapper> initList = new ArrayList<OrderWrapper>();
             for (InitFunc initFunc : loader) {

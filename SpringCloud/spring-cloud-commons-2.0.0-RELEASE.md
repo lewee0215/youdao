@@ -1,4 +1,4 @@
-# spring-cloud.commons # spring.factories
+# spring-cloud-commons # spring.factories
 ```java
 // EnableAutoConfiguration
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\

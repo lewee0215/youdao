@@ -1,6 +1,5 @@
 # AQS原理
 https://blog.csdn.net/mulinsen77/article/details/84583716  
-
 AQS：AbstractQuenedSynchronizer抽象的队列式同步器。是除了java自带的synchronized关键字之外的锁机制  
 
 <font color='yellow'>
@@ -104,3 +103,6 @@ https://blog.csdn.net/striveb/article/details/86761900
 AQS 定义了两种资源共享方式：  
 1. Exclusive：独占，只有一个线程能执行，如ReentrantLock
 2. Share：共享，多个线程可以同时执行，如Semaphore、CountDownLatch、ReadWriteLock，CyclicBarrier
+
+## AQS 实现原理
+https://www.cnblogs.com/waterystone/p/4920797.html

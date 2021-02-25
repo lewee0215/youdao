@@ -2,14 +2,20 @@
 https://blog.csdn.net/u012068483/article/details/106879730
 
 Thread.class 线程 6 种状态枚举：
+https://blog.csdn.net/m0_37779570/article/details/84938476
 ```Java
 public enum State {
-    NEW,        /*** 新建*/
-    RUNNABLE,   /*** 可运行的*/
-    BLOCKED,    /*** 阻塞*/
-    WAITING,    /*** 等待*/
+    NEW,        /*** 新建：线程对象被创建后，就进入了新建状态*/ 
+
+    RUNNABLE,   /*** 可运行的：复合状态。它包括两个子状态：READY和RUNNING; 线程对象被创建后，其它线程调用了该对象的start()方法，从而来启动该线程。随时可能被CPU调度执行*/ 
+
+    BLOCKED,    /*** 阻塞： 一个线程发起一个阻塞式I/O（Blocking I/O）操作后，或者申请一个又其他线程持有的独占资源（比如锁）时，相应的线程会处于该状态*/
+
+    WAITING,    /*** 等待: 能够让线程处于WAITING状态的方法有：Object.wait(),Thread.join()和LockSupport.park(Object)*/
+
     TIMED_WAITING,  /*** 有限等待*/
-    TERMINATED; /*** 终止*/
+    
+    TERMINATED; /*** 终止：已经执行结束的线程处于该状态*/
 }
 ```
 

@@ -53,6 +53,10 @@ LoadTimeWeaverAware
 3. AQS 实现原理
 4. Redis AOF 命令写入机制
 
+5. Redis 为什么单线程
+6. Sharding JDBC 实现原理
+7. 高并发的限流问题
+
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID
         threadlocal.put 

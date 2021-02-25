@@ -1,3 +1,12 @@
+## Redis 单线程实现
+https://blog.csdn.net/xlgen157387/article/details/79470556  
+因为Redis是基于内存的操作，CPU不是Redis的瓶颈，Redis的瓶颈最有可能是机器内存的大小或者网络带宽
+
+![](https://img-blog.csdn.net/20180307162652293?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMDg3MDUxOA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+参考：https://redis.io/topics/faq
+
+多线程使用的时候，可以充分利用起所有的cpu核心，比如说4个核心的cpu,开4个线程的时候，可以同时跑4个线程的运算任务，此时是最大效率，因为实际使用上CPU不是Redis的瓶颈，单线程则成为最佳选择
+
 ## 哨兵，集群，分布式锁，延时队列，位图，HyperLogLog，布隆过滤器，限流，GeoHash（附近的人）
 
 SDS动态字符，链表，字典，跳跃表么？以及相关的底层衍生比如字典的渐进式hash，集合的升级降级么

@@ -59,7 +59,7 @@ public class SentinelApplication {
             Entry entry=null;
             try{
             	String resource = "test.hello";
-                entry= SphU.entry(resource); //它做了什么
+                entry= SphU.entry(resource); 
                 System.out.println("Hello Word");
             }catch (BlockException e){//如果被限流了，那么会抛出这个异常
                 e.printStackTrace();
@@ -85,57 +85,6 @@ public class SentinelApplication {
         com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager.loadRules(rules);
     }
 }
-```
-
-### SphU.entry 初始化操作
-```java
-// 类静态代码实现初始化
-public class Env {
-    public static final NodeBuilder nodeBuilder = new DefaultNodeBuilder();
-    public static final Sph sph = new CtSph();
-    static {
-        // If init fails, the process will exit.
-        InitExecutor.doInit();
-    }
-}
-
-public final class InitExecutor {
-    private static AtomicBoolean initialized = new AtomicBoolean(false);
-    /**
-     * If one {@link InitFunc} throws an exception, the init process
-     * will immediately be interrupted and the application will exit.
-     * The initialization will be executed only once.
-     */
-    public static void doInit() {
-        if (!initialized.compareAndSet(false, true)) {
-            return;
-        }
-        try {
-            // /META-INF/services/com.alibaba.csp.sentinel.init.InitFunc
-            //com.alibaba.csp.sentinel.transport.init.CommandCenterInitFunc
-            //com.alibaba.csp.sentinel.transport.init.HeartbeatSenderInitFunc  在客户端首次调用后，默认为每隔10秒向控制台发送心跳包
-            ServiceLoader<InitFunc> loader = ServiceLoader.load(InitFunc.class);
-            List<OrderWrapper> initList = new ArrayList<OrderWrapper>();
-            for (InitFunc initFunc : loader) {
-                RecordLog.info("[Sentinel InitExecutor] Found init func: " + initFunc.getClass().getCanonicalName());
-                insertSorted(initList, initFunc);
-            }
-            for (OrderWrapper w : initList) {
-                w.func.init();
-                RecordLog.info(String.format("[Sentinel InitExecutor] Initialized: %s with order %d",
-                    w.func.getClass().getCanonicalName(), w.order));
-            }
-        } catch (Exception ex) {
-            RecordLog.info("[Sentinel InitExecutor] Init failed", ex);
-            ex.printStackTrace();
-        }
-    }
-}
-
-com.alibaba.csp.sentinel.transport.command.SimpleHttpCommandCenter
-
-com.alibaba.csp.sentinel.transport.heartbeat.SimpleHttpHeartbeatSender
-
 ```
 
 ### SphU.entry 执行逻辑

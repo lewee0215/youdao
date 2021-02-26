@@ -189,6 +189,57 @@ public class SentinelAutoConfiguration {
 		return new SentinelDataSourcePostProcessor();
 	}
 }
+
+public class SentinelBeanPostProcessor implements MergedBeanDefinitionPostProcessor {
+	private ConcurrentHashMap<String, SentinelRestTemplate> cache = new ConcurrentHashMap<>();
+
+	@Override
+	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition,
+			Class<?> beanType, String beanName) {
+		if (checkSentinelProtect(beanDefinition, beanType)) {
+			SentinelRestTemplate sentinelRestTemplate;
+			if (beanDefinition.getSource() instanceof StandardMethodMetadata) {
+				sentinelRestTemplate = ((StandardMethodMetadata) beanDefinition
+						.getSource()).getIntrospectedMethod()
+								.getAnnotation(SentinelRestTemplate.class);
+			}
+			else {
+				sentinelRestTemplate = beanDefinition.getResolvedFactoryMethod()
+						.getAnnotation(SentinelRestTemplate.class);
+			}
+			// check class and method validation
+			checkSentinelRestTemplate(sentinelRestTemplate, beanName);
+			cache.put(beanName, sentinelRestTemplate);
+		}
+	}
+
+	// 添加 RestTemplate 拦截器
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName)
+			throws BeansException {
+		if (cache.containsKey(beanName)) {
+			// add interceptor for each RestTemplate with @SentinelRestTemplate annotation
+			StringBuilder interceptorBeanNamePrefix = new StringBuilder();
+			SentinelRestTemplate sentinelRestTemplate = cache.get(beanName);
+			interceptorBeanNamePrefix
+					.append(StringUtils.uncapitalize(
+							SentinelProtectInterceptor.class.getSimpleName()))
+					.append("_")
+					.append(sentinelRestTemplate.blockHandlerClass().getSimpleName())
+					.append(sentinelRestTemplate.blockHandler()).append("_")
+					.append(sentinelRestTemplate.fallbackClass().getSimpleName())
+					.append(sentinelRestTemplate.fallback());
+			RestTemplate restTemplate = (RestTemplate) bean;
+			String interceptorBeanName = interceptorBeanNamePrefix + "@"
+					+ bean.toString();
+			registerBean(interceptorBeanName, sentinelRestTemplate, (RestTemplate) bean);
+			SentinelProtectInterceptor sentinelProtectInterceptor = applicationContext
+					.getBean(interceptorBeanName, SentinelProtectInterceptor.class);
+			restTemplate.getInterceptors().add(0, sentinelProtectInterceptor);
+		}
+		return bean;
+	}
+}
 ```
 
 

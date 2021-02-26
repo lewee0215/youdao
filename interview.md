@@ -57,6 +57,11 @@ LoadTimeWeaverAware
 6. Sharding JDBC 实现原理
 7. 高并发的限流问题
 
+> 中通
+1. 线程切换开销
+2. java8 新特性; Stream,Optional,ConsurrentHashMap 
+3. 
+
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID
         threadlocal.put 

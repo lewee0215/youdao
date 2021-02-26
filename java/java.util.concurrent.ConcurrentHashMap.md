@@ -12,11 +12,10 @@ Segment是一种可重入锁ReentrantLock，在ConcurrentHashMap里扮演锁的�
 ## JDK1.8
 https://www.jianshu.com/p/865c813f2726
 
-JDK1.8的实现已经摒弃了Segment的概念，而是直接用Node数组+链表+红黑树的数据结构来实现，并发控制使用Synchronized和CAS来操作，整个看起来就像是优化过且线程安全的HashMap
+JDK1.8的实现已经摒弃了Segment的概念，而是直接用 <font color='yellow'> Node数组+链表+红黑树 </font> 的数据结构来实现，并发控制使用Synchronized和CAS来操作，整个看起来就像是优化过且线程安全的HashMap
 
 https://blog.csdn.net/weixin_43185598/article/details/87938882  
 默认初期长度为16，当往map中继续添加元素的时候，通过hash值跟数组长度取与来决定放在数组的哪个位置，如果出现放在同一个位置的时候，优先以链表的形式存放，在同一个位置的个数又达到了8个以上，如果数组的长度还小于64的时候，则会扩容数组。如果数组的长度大于等于64了的话，在会将该节点的链表转换成树
-
 
 ## ConcurrentHashMap 高低位HashCode
 https://www.cnblogs.com/augustrush/p/13195141.html  

@@ -2,6 +2,35 @@
 https://blog.csdn.net/tongdanping/article/details/79647337  
 *注意：为了避免无用的自旋，轻量级锁一旦膨胀为重量级锁就不会再降级为轻量级锁了；偏向锁升级为轻量级锁也不能再降级为偏向锁
 
+![](https://img-blog.csdn.net/20180930170014163?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMzODA2OTQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+ 
+## 线程状态及状态转换
+https://blog.csdn.net/u013380694/article/details/82911610   
+当多个线程同时请求某个对象监视器时，对象监视器会设置几种状态用来区分请求的线程：
+
+* Contention List：所有请求锁的线程将被首先放置到该竞争队列。
+* Entry List：Contention List中那些有资格成为候选人的线程被移到Entry List。
+* Wait Set：那些调用wait方法被阻塞的线程被放置到Wait Set。
+* OnDeck：任何时刻最多只能有一个线程正在竞争锁，该线程称为OnDeck。
+* Owner：获得锁的线程称为Owner。
+* !Owner：释放锁的线程
+
+## ContentionList虚拟队列
+ContentionList并不是一个真正的Queue，而只是一个虚拟队列，原因在于ContentionList是由Node及其next指针逻辑构成，并不存在一个Queue的数据结构
+
+![](https://img-blog.csdn.net/20180930170135161?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMzODA2OTQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+
+ContentionList是一个后进先出（LIFO）的队列，每次新加Node时都会在队头进行，通过CAS改变第一个节点的的指针为新增节点，同时设置新增节点的next指向后续节点，而取得操作则发生在队尾。显然，该结构其实是个Lock-Free的队列
+
+因为只有Owner线程才能从队尾取元素，也即线程出列操作无争用，当然也就避免了CAS的ABA问题
+
+## EntryList
+https://blog.csdn.net/u013380694/article/details/82911610  
+EntryList与ContentionList逻辑上同属等待队列，ContentionList会被线程并发访问，为了降低对ContentionList队尾的争用，而建立EntryList。Owner线程在unlock时会从ContentionList中迁移线程到EntryList，并会指定EntryList中的某个线程（一般为Head）为Ready（OnDeck）线程。Owner线程并不是把锁传递给OnDeck线程，只是把竞争锁的权利交给OnDeck，OnDeck线程需要重新竞争锁。这样做虽然牺牲了一定的公平性，但极大的提高了整体吞吐量，在Hotspot中把OnDeck的选择行为称之为“竞争切换”
+
+## WaitSet队列
+如果Owner线程被wait方法阻塞，则转移到WaitSet队列；如果在某个时刻被notify/notifyAll唤醒，则再次转移到EntryList
+
 ## Java 对象内存信息
 https://blog.csdn.net/tongdanping/article/details/79647337  
 对象是存放在堆内存中的，对象大致可以分为三个部分，分别是对象头、实例变量和填充字节

@@ -64,6 +64,8 @@ LoadTimeWeaverAware
 1. 线程切换开销
 2. java8 新特性; Stream,Optional,ConsurrentHashMap 
 
+> 得物 03.03/19:00
+
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID
         threadlocal.put 

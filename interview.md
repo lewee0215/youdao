@@ -57,14 +57,22 @@ LoadTimeWeaverAware
 6. Sharding JDBC 实现原理
 7. 高并发的限流问题
 
-> 爱回收
+> 爱回收 03.02/15:00
 1. 线程状态
 
 > 中通
 1. 线程切换开销
 2. java8 新特性; Stream,Optional,ConsurrentHashMap 
 
-> 得物 03.03/19:00
+> 阿里本地生活
+1. notify 和 notifyAll 的区别
+2. semaphore 和 线程池的区别
+3. 聚集索引结构
+4. TreeMap 有序实现
+5. TopN 算法
+6. CopyOnWrite
+
+> 得物 03.04/19:00
 
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID

@@ -35,6 +35,7 @@ Wakes up a single thread that is waiting on this object's monitor
 \## wait()、notify()、notifyAll() 三个方法必须在 <font color='red'> synchronized</font> 语句块内使用,wait 和 notify必须配套使用，即必须使用同一把锁调用  
 <br>
 \## wait 与 sleep 的不同之处在于：wait会释放对象的"锁标志"
+
 ```Java
 synchronized (obj) {
     while (<condition does not hold>)
@@ -42,6 +43,7 @@ synchronized (obj) {
     ... // Perform action appropriate to condition     /*  */
 }
 ```
+notify() 方法随机唤醒对象的等待池中的一个线程，进入锁池；notifyAll() 唤醒对象的等待池中的所有线程，进入锁池
 
 * yield()  
 yield方法仅释放CPU执行权，锁仍然占用，yield()方法不会释放锁，从而让其他具有相同优先级的等待线程获取执行权，线程会被放入就绪队列，会在短时间内再次执行

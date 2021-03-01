@@ -1,6 +1,7 @@
 # Redis Cluster Sharding
 http://doc.redisfans.com/topic/cluster-tutorial.html#redis-guarantee  
 https://www.cnblogs.com/williamjie/p/11132211.html  
+Redis-Cluster采用无中心结构，每个节点保存数据和整个集群状态,每个节点都和其他所有节点连接  
 
 Redis Cluster集群有多个shard组成，每个shard可以有一个master和多个slaves构成，数据根据hash slots配额分布在多个shard节点上
 

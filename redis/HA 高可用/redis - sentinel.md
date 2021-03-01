@@ -56,7 +56,6 @@ https://www.cnblogs.com/albert32/p/13393382.html
 3. 选择复制偏移量（数据写入量的字节，记录写了多少数据。主服务器会把偏移量同步给从服务器，当主从的偏移量一致，则数据是完全同步）最大的从节点作为主节点，如不存在则继续
 4. 选择runid（redis每次启动的时候生成随机的runid作为redis的标识）最小的从节点作为主节点
 
-
 如果一个slave与master失去联系超过10次，并且每次都超过了配置的最大失联时间(down-after-milliseconds)，如果sentinel在进行failover时发现slave失联，那么这个slave就会被sentinel认为不适合用来做新master的。
 更严格的定义是，如果一个slave持续断开连接的时间超过
 (down-after-milliseconds * 10) + milliseconds_since_master_is_in_SDOWN_state

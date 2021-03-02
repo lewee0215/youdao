@@ -16,7 +16,9 @@ brokerIP2 存在broker主从时，在broker主节点上配置了brokerIP2的话,
 
 # Broker MessageQueue
 在创建或更改topic时，需要配置writeQueueNums和readQueueNums数
-读写队列，则是在做路由信息时使用。在消息发送时，使用写队列个数返回路由信息，而消息消费时按照读队列个数返回路由信息
+读写队列，则是在做路由信息时使用。
+
+在消息发送时，使用写队列个数返回路由信息，而消息消费时按照读队列个数返回路由信息
 ```java
 topicRouteData = this.mQClientAPIImpl.getDefaultTopicRouteInfoFromNameServer(defaultMQProducer.getCreateTopicKey(), 1000 * 3);
     if (topicRouteData != null) {

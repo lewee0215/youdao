@@ -53,6 +53,7 @@ Properties|Properties的内容，也不是固定长度，和前面的2字节prop
 ## ConsumeQueue
 ConsumerQueue相当于CommitLog的索引文件，消费者消费时会先从ConsumerQueue中查找消息的在commitLog中的offset，再去CommitLog中找元数据。  
 如果某个消息只在CommitLog中有数据，没在ConsumerQueue中， 则消费者无法消费，Rocktet的事务消息就是这个原理  
+
 Consumequeue类对应的是每个 topic-queuId 下面的所有文件，相当于字典的目录用来指定消息在消息的真正的物理文件commitLog上的位置  
 <font color='yellow'>tags HashCode 存储在 ConsumeQueue </font>  
 消息的起始物理偏移量physical offset(long 8字节)+消息大小size(int 4字节)+tagsCode(long 8字节)
@@ -64,22 +65,26 @@ Consumequeue类对应的是每个 topic-queuId 下面的所有文件，相当于
 > 每个cosumequeue文件的名称fileName，名字长度为20位，左边补零，剩余为起始偏移量；  
 比如00000000000000000000代表了第一个文件，起始偏移量为0，文件大小为600W，当第一个文件满之后创建的第二个文件的名字为00000000000006000000，起始偏移量为6000000
 
-ConsumeQueue中只存储路由到该queue中的消息在CommitLog中的offset，消息的大小以及消息所属的tag的hash（tagCode）
-![alt text](https://pic4.zhimg.com/80/v2-14002dfc29ac5d12b0109c8f80ade4e7_1440w.jpg "CommitLog中的存储格式")
+ConsumeQueue中只存储路由到该queue中的消息在CommitLog中的offset，消息的大小以及消息所属的tag的hash（tagCode）  
+<font color='yellow'> 采用二分查找来加速检索 </font> 
+![](https://pic4.zhimg.com/80/v2-14002dfc29ac5d12b0109c8f80ade4e7_1440w.jpg)
 
 ## Checkpoint 文件
-记录 CommitLog，ConsumeQueue，IndexFile 的刷盘时间点，文件固定长度为 4k，其中只用该文件的前 24个字节
+存储commitlog文件最后一次刷盘时间戳、consumequeue最后一次刷盘时间、index索引文件最后一次刷盘时间戳
+文件固定长度为 4k，其中只用该文件的前 24个字节
 physicMsgTimestamp : commitlog 文件刷盘时间点(8字节)  
 logicsMsgTimestamp ： 消息消费队列文件刷盘时间点(8字节) 
 indexMsgTimestamp ： 索引文件刷盘时间点(8字节) 
 
 ## Index 索引文件
-https://blog.csdn.net/Nuan_Feng/article/details/108328883
+https://blog.csdn.net/Nuan_Feng/article/details/108328883  
+IndexFile：用于为生成的索引文件提供访问服务，通过消息Key值查询消息真正的实体内容。在实际的物理存储上，文件名则是以创建时的时间戳命名的，固定的单个IndexFile文件大小约为400M，一个IndexFile可以保存 2000W个索引；
+
 ConsumerQueue是通过偏移量offset去CommitLog文件中查找消息，但实际工作应用中，我们想查找某条具体的消息，并不知道offset值
 
 index log索引文件使用的是hash存储机制, key通过 (topic+key)%槽位数得到,value为commitlog的物理偏移量phyOffset
 
-![alt text](https://img-blog.csdnimg.cn/2020082820415171.png "CommitLog中的存储格式")
+![](https://img-blog.csdnimg.cn/2020082820415171.png)
 
 ### IndexHead：
 字段名称 | 字段描述
@@ -95,6 +100,9 @@ indexCount|已使用的 Index 条目个数
 ### Hash 槽：
 一个 IndexFile 默认包含 500W 个 Hash 槽，每个 Hash 槽存储的是落在该 Hash 槽的 hashcode 最新的 Index 的索引
 
+![](https://oscimg.oschina.net/oscnet/3972655b3b90dee17afbc07d074b7d38f32.jpg
+)
+
 ### Index 条目列表
 字段名称 | 字段描述
 :-- | :--
@@ -103,3 +111,23 @@ phyoffset|消息对应的物理偏移量
 timedif|该消息存储时间与第一条消息的时间戳的差值，小于 0 表示该消息无效  
 preIndexNo|该条目的前一条记录的 Index 索引，hash 冲突时，根据该值构建链表结构  
 <br/>
+
+### Message 通过 KEY 查找消息
+https://blog.csdn.net/chongshui129727/article/details/101006218
+IndexFile：用于为生成的索引文件提供访问服务，通过消息Key值查询消息真正的实体内容。在实际的物理存储上，文件名则是以创建时的时间戳命名的，固定的单个IndexFile文件大小约为400M，一个IndexFile可以保存 2000W个索引；
+
+当出现hash 冲突时， 构建的链表结构类似Hashmap
+
+1. 根据查询的 key 的 hashcode%slotNum 得到具体的槽的位置（ slotNum 是一个索引文件里面包含的最大槽的数目，例如图中所示 slotNum=5000000）。
+
+2. 根据 slotValue（ slot 位置对应的值）查找到索引项列表的最后一项（倒序排列， slotValue 总是指向最新的一个 索引项）。
+
+3. 遍历索引项列表返回查询时间范围内的结果集（默认一次最大返回的 32 条记彔）
+
+4. Hash 冲突；寻找 key 的 slot 位置时相当于执行了两次散列函数，一次 key 的 hash，一次 key 的 hash 值取模，因此返里存在两次冲突的情况；
+
+* 第一种：key 的 hash 不同但模数相同，此时查询的时候会在比较一次key 的hash 值（每个索引项保存了 key 的 hash 值），过滤掉 hash 值不相等的项。
+* 第二种：hash 值相等但 key 不等，出于性能的考虑冲突的检测放到客户端处理（ key 的原始值是存储在消息文件中的，避免对数据文件的解析），客户端比较一次消息体的 key 是否相同
+
+
+

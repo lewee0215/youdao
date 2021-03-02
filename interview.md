@@ -73,6 +73,25 @@ LoadTimeWeaverAware
 6. CopyOnWrite
 
 > 得物 03.04/19:00
+1. Tomcat 实现原理
+2. FullGC 启动时机
+3. epoll 底层, 如何实现事件通知
+4. rocketmq 延时消息底层实现
+5. 事务消息底层
+6. message key 查找实现
+7. synchronized 和 reentrantlcok 实现
+8. 线程池 corepool 设置
+9. hystrix 限流实现
+10. parallelStream 实现
+11. https , tcp
+12. feign 组件
+13. cpu 负载查看
+14. mysql user filesort use temporary
+15. refreshscope 实现原理
+16. eureka 多级缓存
+17. 快排
+18. 两数之和
+19. 数据量大,内存不够怎么排序
 
 ## Redis 分布式锁可重入性实现
 if setnx threadUUID

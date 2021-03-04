@@ -42,3 +42,34 @@ https://www.cnblogs.com/klvchen/p/10137117.html
 |Using temporary|mysql 对查询结果排序时会使用临时表|
 |Using filesort|mysql会对结果使用一个外部索引排序，而不是按索引次序从表里读取行。mysql有两种文件排序算法，这两种排序方式都可以在内存或者磁盘上完成，explain不会告诉你mysql将使用哪一种文件排序，也不会告诉你排序会在内存里还是磁盘上完成|
 |Range checked for each record(index map: N)|没有好用的索引，新的索引将在联接的每一行上重新估算，N是显示在possible_keys列中索引的位图，并且是冗余的|
+
+## mysql 索引排序 index sort
+https://database.51cto.com/art/201912/607944.htm
+Using index是指MySQL扫描索引本身完成排序。index效率高，filesort效率低
+
+假设KEY test(a,b,c)
+```sql
+(1) order by 能使用索引最左前缀
+-order by a 
+-order by a,b 
+-order by a,b,c 
+-order by a asc,b asc,c asc 
+-order by a desc,b desc,c desc 
+
+(2) 如果where使用索引最左前缀定位为常量，则order by可以使用索引
+-where a= const order by b,c 
+-where a= const and b= const order by c 
+-where a= const and b> consst order by b,c 
+
+(3) 不能使用索引进行排序
+-order by a asc,b desc, c desc /*排序不一致*/ 
+-where g=const order by b,c /*丢失a索引*/ 
+-where a=const order by c /*丢失b索引*/ 
+-where a=const order by a,d /*d不是索引一部分*/ 
+-where a in (....) order by b,c /*对于排序来说，多个相等条件也是范围查询*/ 
+```
+## mysql 两种文件排序算法
+https://www.cnblogs.com/gaogao67/p/12056130.html  
+1、常规排序(双路排序)
+2、优化排序(单路排序)
+3、堆排序

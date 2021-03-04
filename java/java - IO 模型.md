@@ -23,15 +23,24 @@ https://blog.csdn.net/historyasamirror/article/details/5778378
 
 ![](https://img-blog.csdnimg.cn/20210204212635345.gif)
 
-## IO multiplexing
+## IO multiplexing = （event driven IO）
 IO Multiplex即IO多路复用，不同的操作系统有不同的实现：
-如 Windows：selector ； Linux：epoll ；Mac：kqueue
+* Windows：selector 通过轮询FD_SETSIZE来问每一个socket的状态变化
+* Linux：epoll 把socket与事件绑定在一起，当监听到socket变化时，回调相应的处理
+* Mac：kqueue
 
-select/epoll的好处就在于单个process就可以同时处理多个网络连接的IO。它的基本原理就是select/epoll这个function会不断的轮询所负责的所有socket，当某个socket有数据到达了，就通知用户进程
+https://blog.csdn.net/historyasamirror/article/details/5778378  
+select/epoll的好处就在于单个process就可以同时处理多个网络连接的IO。
+它的基本原理就是select/epoll这个function会不断的轮询所负责的所有socket，当某个socket有数据到达了，就通知用户进程
 
 ![](https://img-blog.csdnimg.cn/20210204212634290.gif)
 
 ## Signal driven IO
 
+![](https://upload-images.jianshu.io/upload_images/11345047-ee919b818091fe7c.png)
+
 ## Asynchronous IO
+在内核角度，当它受到一个asynchronous read之后，首先它会立刻返回，所以不会对用户进程产生任何block
+
+kernel会等待数据准备完成，然后将数据拷贝到用户内存，当这一切都完成之后，kernel会给用户进程发送一个signal，告诉它read操作完成
 ![](https://img-blog.csdnimg.cn/20210204212634315.gif)

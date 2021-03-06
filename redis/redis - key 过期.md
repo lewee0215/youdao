@@ -1,3 +1,29 @@
+# Redis 设置过期时间
+```java
+EXPIRE <KEY> <TTL> : 将键的生存时间设为 ttl 秒
+PEXPIRE <KEY> <TTL> :将键的生存时间设为 ttl 毫秒
+EXPIREAT <KEY> <timestamp> :将键的过期时间设为 timestamp 所指定的秒数时间戳
+PEXPIREAT <KEY> <timestamp>: 将键的过期时间设为 timestamp 所指定的毫秒数时间戳
+```
+https://blog.csdn.net/weixin_31449201/article/details/81735489
+设置生存时间的时候是redis内部计算好时间之后在内存处理的，最终的处理都会转向PEXPIREAT
+
+# Redis expire 过期字典
+https://www.cnblogs.com/itplay/p/10162935.html  
+在数据库结构redisDb中的expires字典中保存了数据库中所有键的过期时间，我们称expire这个字典为过期字典。
+（1）过期字典是一个指针，指向键空间的某个键对象。
+（2）过期字典的值是一个longlong类型的整数，这个整数保存了键所指向的数据库键的过期时间–一个毫秒级的 UNIX 时间戳
+```c++
+typedef struct redisDb {
+    ...
+    
+    dict *dict;     //数据库键空间,保存着数据库中所有键值对
+    dict *expires      // 过期字典,保存着键的过期时间
+    ...
+} redisDb;
+```
+结构中可以看到expire字典(过期字典)和 dict字典（数据库键空间，保存着数据库中所有键值对）是并列的，由此可见expire字典的重要性
+
 # Redis数据过期策略详解
 https://www.cnblogs.com/xuliangxing/p/7151812.html
 https://blog.csdn.net/zlfprogram/article/details/74626384

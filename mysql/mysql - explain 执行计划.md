@@ -70,6 +70,16 @@ Using index是指MySQL扫描索引本身完成排序。index效率高，filesort
 ```
 ## mysql 两种文件排序算法
 https://www.cnblogs.com/gaogao67/p/12056130.html  
-1、常规排序(双路排序)
-2、优化排序(单路排序)
-3、堆排序
+> 1、常规排序(双路排序)
+
+首先根据相应的条件取出相应的排序字段和可以直接定位行数据的行指针信息，然后在sort buffer 中进行排序。排序后再吧查询字段依照行指针取出，共执行两次磁盘io
+
+> 2、优化排序(单路排序)
+
+是一次性取出满足条件行的所有字段，然后在sort buffer中进行排序。 执行一次磁盘io
+
+> 3、堆排序
+堆排序方法也是最优队列的实现方法，MYSQL源码中明显的使用了优先队列来优化order by limit n ，估计max也是用的这种算法
+
+https://www.cnblogs.com/chafanbusi/p/10648026.html  
+如果order by的子句只引用了联接中的第一个表，MySQL会先对第一个表进行排序，然后进行联接。也就是expain中的Extra的Using Filesort.否则MySQL先把结果保存到临时表(Temporary Table),然后再对临时表的数据进行排序.此时expain中的Extra的显示Using temporary Using Filesort.
